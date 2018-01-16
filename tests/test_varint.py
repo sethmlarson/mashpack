@@ -15,7 +15,7 @@
 import pytest
 import hypothesis
 from hypothesis.strategies import integers
-from mshpck import _decode_varint, _encode_varint
+from mshpck import _decode_varint, _encode_varint, LARGEST_VARINT_COLLECTION
 
 
 @pytest.mark.parametrize('input,prefix,output', [
@@ -23,10 +23,13 @@ from mshpck import _decode_varint, _encode_varint
     (b'\x81', 0, 1),
     (b'\x01\x00\x80', 0, 1),
     (b'\xF8', 4, 0),
-    (b'\xF8', 3, 8)
+    (b'\xF8', 3, 8),
+    (b'\x00\x81', 1, 64)
 ])
 def test_decode_varint(input, prefix, output):
-    assert _decode_varint(input, prefix) == output
+    decoded_value, consumed = _decode_varint(input, prefix)
+    assert decoded_value == output
+    assert consumed == len(input)
 
 
 def test_encode_varint_single_byte():
@@ -39,7 +42,7 @@ def test_encode_varint_single_byte():
     (1 << 7, 1, 0x80, b'\x80\x82'),
     (1 << 49, 0, 0, b'\x00\x00\x00\x00\x00\x00\x00\x81'),
     (1 << 56, 0, 0, b'\x00\x00\x00\x00\x00\x00\x00\x00\x81'),
-    (64, 1, 0, b'\x00\x81')
+    (1 << 6, 1, 0, b'\x00\x81')
 ])
 def test_encode_varint_multiple_bytes(input, prefix, header, output):
     assert _encode_varint(input, prefix, header) == output
@@ -50,4 +53,19 @@ def test_encode_varint_multiple_bytes(input, prefix, header, output):
     integers(min_value=0, max_value=7)
 )
 def test_cyclic_encode_and_decode(value, prefix):
-    assert _decode_varint(_encode_varint(value, prefix), prefix) == value
+    encoded_value = _encode_varint(value, prefix)
+    decoded_value, consumed = _decode_varint(encoded_value, prefix)
+
+    assert len(encoded_value) == consumed
+    assert decoded_value == value
+
+
+def test_no_stop_bit_found():
+    with pytest.raises(ValueError):
+        _decode_varint(b'\x00\x00\x00', 0)
+
+
+def test_too_big_of_integer_collection_to_decode():
+    data = _encode_varint(LARGEST_VARINT_COLLECTION + 1, 0)
+    with pytest.raises(ValueError):
+        _decode_varint(data, 0, _collection=True)

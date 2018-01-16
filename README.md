@@ -8,28 +8,83 @@ for encoding [variable-length integers](https://http2.github.io/http2-spec/compr
 in order to achieve superior JSON-object compression. mshpck has the same interface as MessagePack including extensions.
 
 By combining these two specifications we're able to achieve a header which is typically the size of
-a nybble rather than a whole byte. This enables more dense compression of values, especially within
-data structures such as arrays and maps and when using 'singleton' values such as `TRUE`, `FALSE`, and `NULL`
-which only take a nybble each.
+a nibble rather than a whole byte. This enables more dense compression of values, especially within
+data structures such as arrays and maps and when using 'singleton' values such as `true`, `false`, and `null`
+which only take a nibble each.
+
+## Future Improvements
+
+- `MAPT`, `ARRAYT` for 'typed map' and 'typed array' which the first element
+  declares it's type information and then the rest of the elements follow the
+  same type information. This allows for getting rid of the type prefix on
+  items that are extensible.
+  
+  This is especially useful for large arrays of integers or floats as it removes
+  lots of header information.
+  
+  Example:
+  
+  ```
+  Encoding [0.0] * 4 comparison between ARRAY and ARRAYT(INT)
+
+  ARRAY
+  b100|10100[b01110011[FLOAT],b01110011[FLOAT],b01110011[FLOAT],b01110011[FLOAT]] (37 bytes)
+  
+  ARRAYT(INT)
+  b0010|1100[b01110011[FLOAT],[FLOAT],[FLOAT],[FLOAT]] (34 bytes)
+  ```
+
+- `MATRIX` which is where a list of lists can be condensed into a single list
+  and only encode the lengths of the two dimensions. This can be done if the system
+  detects `ARRAY[ARRAY]` and all inner `ARRAY`s are the same length.
+  
+  There's also great potential in encoding large arrays as instead of `VARINT(3)` for
+  encoding the length of the arrays the length is encoded in `VARINT(0)` which can
+  store much larger values. Potential for use in graphics, statistics, machine learning
+  
+  Example:
+  ```
+  Encoding [[1], [1], [1]] comparison between ARRAY[ARRAY] and MATRIX
+
+  ARRAY[ARRAY]
+  b100|10011[b100|10001[b101|10001],b100|10001[b101|10001],b100|10001[b101|10001]] (7 bytes)
+  
+  MATRIX
+  b0111|0000,10000011,10000001[b101|10001,b101|10001,b101|10001] (6 bytes)
+  ```
+
+- `MAPSTR` which is a map where all keys are `STR` without `0x00` bytes. This is a common
+  scenario when encoding JSON and can lead to increased packing of keys. Instead of packing
+  key-value, key-value the structure is packed key\x00key\x00value,value. Keys are also packed
+  without header or length information as it is known they are `STR` and their length is determined
+  with `0x00` bytes.
+
+- User-defined `EXT` types. b01110000 to b01110111 are reserved for use by mshpck.
+
 
 ## Specification
 
 ### Data Types Overview
 
-| data type | prefix  | prefix length | nibblable |
-|-----------|---------|---------------|-----------|
-| array     | `b100`  | 3             | false     |
-| int       | `b101`  | 3             | false     |
-| map       | `b110`  | 3             | false     |
-| str       | `b111`  | 3             | false     |
-| false     | `b0000` | 4             | true      |
-| true      | `b0001` | 4             | true      |
-| float32   | `b0010` | 4             | true      |
-| float64   | `b0011` | 4             | true      |
-| null      | `b0100` | 4             | true      |
-| negint    | `b0101` | 4             | false     |
-| bin       | `b0110` | 4             | false     |
-| ext       | `b0111` | 4             | false     |
+| data type | prefix      | prefix length |
+|-----------|-------------|---------------|
+| ARRAY     | `b100`      | 3             |
+| INT       | `b101`      | 3             |
+| MAP       | `b110`      | 3             |
+| STR       | `b111`      | 3             |
+| FALSE     | `b0000`     | 4             |
+| TRUE      | `b0001`     | 4             |
+| ARRAYT    | `b0010`     | 4             |
+| MAPT      | `b0011`     | 4             |
+| NULL      | `b0100`     | 4             |
+| NEGINT    | `b0101`     | 4             |
+| BIN       | `b0110`     | 4             |
+| EXT       | `b0111`     | 4             |
+| MATRIX    | `b01110000` | 8             |
+| TIMESTAMP | `b01110001` | 8             |
+| FLOAT32   | `b01110010` | 8             |
+| FLOAT64   | `b01110011` | 8             |
+| MAPSTRK   | `b01110100` | 8             |
 
 ### Variable-Length Integers
 
@@ -41,13 +96,13 @@ is 1 in the most significant bit (after accounting for prefix) then the integer 
 otherwise there is another byte to consume. All data is shifted by 7 bits and the next byte
 is added and processed similarly.
 
-Within this specification a variable-length integer is called a `varint(prefix)`.
+Within this specification a variable-length integer is labeled as `varint(prefix)`.
 
 Here's what the integer 1283 would look like represented with a prefix of 3:
 
 ```
 +-----+------------+------------+
-| xxx | [0]0000101 | [1]0000011 |
+| xxx | [0]0000011 | [1]0000101 |
 +-----+------------+------------+
 
 where
@@ -56,21 +111,6 @@ where
   and the second is 1 indicating stop.
 - 1283 == (b0000101 << 7) + b0000011 == b00001010000011
 ```
-
-### Alignment
-
-mshpck has the chance of aligning data on a nibble boundary instead of a byte boundary
-when "nibbleable" data types are combined in a collection with non-nibblable data types.
-This can come with a performance penalty for encoding and decoding but can be avoided
-in some situations with maps.
-
-One of those situations is when maps do not need to be ordered. In this case
-each key-value pair is assesed if it will be guaranteed to hit a byte boundary
-and will be encoded first. Then objects that contain collections in their values
-and finally objects that are nibblable to reduce the performance penalty.
-
-After encoding an array or map if the encoded object does not hit a byte boundary then the
-specification will pad zero bits until the object hits a byte boundary.
 
 ### Arrays (`array`)
 
