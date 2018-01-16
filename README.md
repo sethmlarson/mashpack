@@ -5,7 +5,7 @@
 mshpck (Pronounced "mish-pick") is based on a combination of [MessagePack](https://github.com/msgpack/msgpack)
 for packing JSON-like objects into binary and [HTTP/2 HPACK](https://http2.github.io/http2-spec/compression.html)
 for encoding [variable-length integers](https://http2.github.io/http2-spec/compression.html#rfc.section.5.1)
-in order to achieve superior JSON-object compression. mshpck has the same interface as
+in order to achieve superior JSON-object compression. mshpck has the same interface as MessagePack including extensions.
 
 By combining these two specifications we're able to achieve a header which is typically the size of
 a nybble rather than a whole byte. This enables more dense compression of values, especially within
