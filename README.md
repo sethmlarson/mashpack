@@ -1,11 +1,24 @@
-# mshpck
+# Mashpack
 
 ## Motivation
 
-mshpck (Pronounced "mash-pack") is based on a combination of [MessagePack](https://github.com/msgpack/msgpack)
+Mashpack is based on a combination of [MessagePack](https://github.com/msgpack/msgpack)
 for packing JSON-like objects into binary and [HTTP/2 HPACK](https://http2.github.io/http2-spec/compression.html)
 for encoding [variable-length integers](https://http2.github.io/http2-spec/compression.html#rfc.section.5.1)
-in order to achieve superior JSON-object compression. mshpck has the same interface as MessagePack including extensions.
+in order to achieve superior JSON-object compression.
+
+Variable length integers are less efficient at representing numbers compared
+to a packed uint32 if both are 32 bits long but when it comes to representing
+integers within 0x00000000-0xFFFFFFFF the variable length integer will only use
+the space required to represent the integer and therefore optimize for smaller
+integers.
+
+Using this method also allows Mashpack to break away from requiring
+multiple sizes for each data type compared to MessagePack. (`ARRAY` in Mashpack
+is capable of representing MessagePack's `fixarray`, `array16` and `array32`)
+
+Variable length integers also remove the requirement that all collections cannot
+be longer than 2\*\*32-1 which is a constraint inherant to MessagePack's collection types.
 
 This repository also serves as a "reference-implementation" of the specification in Python. The specification and
 implementation are currently works in progress, feel free to contribute with a pull request!
@@ -52,32 +65,32 @@ Within this specification a variable-length integer is labeled as `varint(prefix
 Here's what the integer 1283 would look like represented with a prefix of 3:
 
 ```
-+-----+------------+------------+
-| xxx | [0]0000011 | [1]0000101 |
-+-----+------------+------------+
++-----+---------+------------+
+| xxx | [0]0011 | [1]0000101 |
++-----+---------+------------+
 
 where
 - xxx is the prefix bits that aren't a part of the integer.
 - [N] are the stop bits. Notice the first stop bit is 0 indicating continue
   and the second is 1 indicating stop.
-- 1283 == (b0000101 << 7) + b0000011 == b00001010000011
+- 1283 == (b0000101 << 4) + b0011 == b00001010000011
 ```
 
 ### Arrays (`ARRAY`, `ARRAYT`)
 
 ```
 ARRAY:
-+-----+-----------+==========================+
-| 100 | varint(3) | N mshpck-encoded objects |
-+-----+-----------+==========================+
++-----+-----------+============================+
+| 100 | varint(3) | N mashpack-encoded objects |
++-----+-----------+============================+
 
 ARRAYT:
-+------+-----------+=======================+=====================================+
-| 0010 | varint(4) | mshpck object w/ type | N-1 mshpck-encoded objects w/o type |
-+------+-----------+=======================+=====================================+
++------+-----------+=======================+=========================================+
+| 0010 | varint(4) | mashpack object w/ type | N-1 mashpack-encoded objects w/o type |
++------+-----------+=======================+=========================================+
 ```
 
-### Ints (`INT` and `NEGINT`)
+### Integers (`INT` and `NEGINT`)
 
 ```
 INT:
@@ -95,19 +108,19 @@ NEGINT:
 
 ```
 MAP:
-+-----+-----------+============================+
-| 110 | varint(3) | N*2 mshpck-encoded objects |
-+-----+-----------+============================+
++-----+-----------+==============================+
+| 110 | varint(3) | N*2 mashpack-encoded objects |
++-----+-----------+==============================+
 
 MAPT:
-+------+-----------+==========================+=====================================+
-| 0011 | varint(4) | 2 mshpck objects w/ type | N-2 mshpck-encoded objects w/o type |
-+------+-----------+==========================+=====================================+
++------+-----------+============================+=====================================+
+| 0011 | varint(4) | 2 mashpack objects w/ type | N-2 mshpck-encoded objects w/o type |
++------+-----------+============================+=====================================+
 
 MAPSTR:
-+-----++-----------+=====================+==========================+
-| 0001 | varint(4) | N NUL-separated STR | N mshpck-encoded objects |
-+-----++-----------+=====================+==========================+
++-----++-----------+=====================+============================+
+| 0001 | varint(4) | N NUL-separated STR | N mashpack-encoded objects |
++-----++-----------+=====================+============================+
 ```
 
 ### Strings (`STR` and `BIN`)
@@ -128,9 +141,9 @@ BIN:
 
 ```
 MATRIX:
-+------+-----------+---+-----------+============================+
-| 0100 | varint(4) | X | varint(7) | N*M mshpck-encoded objects |
-+------+-----------+---+-----------+============================+
++------+-----------+---+-----------+==============================+
+| 0100 | varint(4) | X | varint(7) | N*M mashpack-encoded objects |
++------+-----------+---+-----------+==============================+
 ```
 
 ### Bools (`TRUE` and `FALSE`)
@@ -232,7 +245,7 @@ EXT:
   
 - Figure out a good datatype for `b0000` because it's in a valuable location having 4 prefix bytes.
 
-- User-defined `EXT` types. b01110000 to b01110111 are reserved for use by mshpck.
+- User-defined `EXT` types. b01110000 to b01110111 are reserved for use by Mashpack.
 
 - Implement a pure-Python version of the specification as well as a Cython implementation.
 
@@ -247,4 +260,3 @@ TODO
 ## License
 
 Apache-2.0
-
