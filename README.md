@@ -238,6 +238,36 @@ EXT:
   key-value, key-value the structure is packed key\x00key\x00value,value. Keys are also packed
   without header or length information as it is known they are `STR` and their length is determined
   with `0x00` bytes.
+  
+  Example:
+  ```
+  Encoding {'foo': 1, 'bar': 2, 'foooooooooooobar': 3} comparison between MAP and MAPSTR
+  
+  MAP:
+  b110|10011{b111|10011"foo":b101|10001,b111|10011,"bar":b101|10010,b111|00000b10000001,"foooooooooooobar":b101|10011} (30 bytes)
+  
+  MAPSTR:
+  b0001|1011{"foo"b00000000"bar"b00000000"foooooooooooobar"b00000000,b101|10001,b101|10010,b101|10011} (29 bytes)
+  ```
+  
+- Maybe need to investigate a "splicing" method for `MAPSTR` where all `STR` keys are inter-spliced
+  and then the length of the entire splicing is encoded as a singular length? Encoding would become
+  more efficient for similar key lengths and many keys. Use `NUL` values when the string is a suitable
+  length for that splice.
+  
+  This would enhance it's efficiency when dealing with `MAP[STR,ANY]` with keys that aren't necessarily long
+  as the implementation above only benefits from long keys.
+  
+  Example:
+  ```
+  Encoding {'foo': 1, 'bar': 2} comparison between MAP and MAPSTR2
+  
+  MAP:
+  b110|10011{b111|10011"foo":b101|10001,b111|10011,"bar":b101|10010} (11 bytes)
+  
+  MAPSTR2:
+  b0001|1010{b111|10110"fboaor":b101|10001,b101|10010} (10 bytes)
+  ```
 
 - Handling of special cases such as `ARRAYT[NONE/TRUE/FALSE]` which would literally map as an `ARRAYT`
   header with length information and the first type and then no other data. This also goes for `MAP`
