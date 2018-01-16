@@ -2,7 +2,7 @@
 
 ## Motivation
 
-mshpck (Pronounced "mish-pick") is based on a combination of [MessagePack](https://github.com/msgpack/msgpack)
+mshpck (Pronounced "mash-pack") is based on a combination of [MessagePack](https://github.com/msgpack/msgpack)
 for packing JSON-like objects into binary and [HTTP/2 HPACK](https://http2.github.io/http2-spec/compression.html)
 for encoding [variable-length integers](https://http2.github.io/http2-spec/compression.html#rfc.section.5.1)
 in order to achieve superior JSON-object compression. mshpck has the same interface as MessagePack including extensions.
