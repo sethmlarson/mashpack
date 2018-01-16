@@ -17,7 +17,7 @@ in order to achieve superior JSON-object compression. mshpck has the same interf
 | INT       | `b101`      | 3             |
 | MAP       | `b110`      | 3             |
 | STR       | `b111`      | 3             |
-| UNUSED    | `b0000`     | 4             |
+| RESERVED  | `b0000`     | 4             |
 | MAPSTR    | `b0001`     | 4             |
 | ARRAYT    | `b0010`     | 4             |
 | MAPT      | `b0011`     | 4             |
@@ -30,6 +30,9 @@ in order to achieve superior JSON-object compression. mshpck has the same interf
 | FLOAT64   | `b01110011` | 8             |
 | FALSE     | `b01110100` | 8             |
 | TRUE      | `b01110101` | 8             |
+| RESERVED  | `b01110110` | 8             |
+| RESERVED  | `b01110111` | 8             |
+| EXT       | `b01111XXX` | 8             |
 
 ### Variable-Length Integers
 
@@ -57,50 +60,74 @@ where
 - 1283 == (b0000101 << 7) + b0000011 == b00001010000011
 ```
 
-### Arrays (`array`)
+### Arrays (`ARRAY`, `ARRAYT`)
 
 ```
-array:
+ARRAY:
 +-----+-----------+==========================+
 | 100 | varint(3) | N mshpck-encoded objects |
 +-----+-----------+==========================+
+
+ARRAYT:
++------+-----------+=======================+=====================================+
+| 0010 | varint(4) | mshpck object w/ type | N-1 mshpck-encoded objects w/o type |
++------+-----------+=======================+=====================================+
 ```
 
-### Ints (`int` and `negint`)
+### Ints (`INT` and `NEGINT`)
 
 ```
-int:
+INT:
 +-----+-----------+
 | 101 | varint(3) |
 +-----+-----------+
 
-negint:
+NEGINT:
 +------+-----------+
 | 0101 | varint(4) |
 +------+-----------+
 ```
 
-### Maps (`map`)
+### Maps (`MAP`, `MAPT`, and `MAPSTR`)
 
 ```
-map:
+MAP:
 +-----+-----------+============================+
 | 110 | varint(3) | N*2 mshpck-encoded objects |
 +-----+-----------+============================+
+
+MAPT:
++------+-----------+==========================+=====================================+
+| 0011 | varint(4) | 2 mshpck objects w/ type | N-2 mshpck-encoded objects w/o type |
++------+-----------+==========================+=====================================+
+
+MAPSTR:
++-----++-----------+=====================+==========================+
+| 0001 | varint(4) | N NUL-separated STR | N mshpck-encoded objects |
++-----++-----------+=====================+==========================+
 ```
 
-### Strings (`str` and `bin`)
+### Strings (`STR` and `BIN`)
 
 ```
-str:
+STR:
 +-----+-----------+===========================+
 | 111 | varint(3) | N bytes of unicode string |
 +-----+-----------+===========================+
 
-bin:
+BIN:
 +------+-----------+========================+
 | 0110 | varint(4) | N bytes of byte string |
 +------+-----------+========================+
+```
+
+### Matrix (`MATRIX`)
+
+```
+MATRIX:
++------+-----------+---+-----------+============================+
+| 0100 | varint(4) | X | varint(7) | N*M mshpck-encoded objects |
++------+-----------+---+-----------+============================+
 ```
 
 ### Bools (`TRUE` and `FALSE`)
@@ -120,12 +147,12 @@ TRUE:
 ### Floats (`FLOAT32` and `FLOAT64`)
 
 ```
-float32:
+FLOAT32:
 +----------+=================================+
 | 01110010 | IEEE 754 single precision float |
 +----------+=================================+
 
-float64:
+FLOAT64:
 +----------+=================================+
 | 01110011 | IEEE 754 double precision float |
 +----------+=================================+
@@ -134,7 +161,7 @@ float64:
 ### Null (`NULL`)
 
 ```
-null:
+NULL:
 +----------+
 | 01110000 |
 +----------+
@@ -143,10 +170,10 @@ null:
 ### Extensions (`EXT`)
 
 ```
-ext:
-+------+-----------+
-| 0111 | ext type  |
-+------+-----------+
+EXT:
++-------+------------+
+| 01111 | varint(5)  |
++-------+------------+
 ```
 
 ## Future Improvements
@@ -195,6 +222,12 @@ ext:
   key-value, key-value the structure is packed key\x00key\x00value,value. Keys are also packed
   without header or length information as it is known they are `STR` and their length is determined
   with `0x00` bytes.
+
+- Handling of special cases such as `ARRAYT[NONE/TRUE/FALSE]` which would literally map as an `ARRAYT`
+  header with length information and the first type and then no other data. This also goes for `MAP`
+  types with fixed-width no-data types.
+  
+- Figure out a good datatype for `b0000` because it's in a valuable location having 4 prefix bytes.
 
 - User-defined `EXT` types. b01110000 to b01110111 are reserved for use by mshpck.
 
