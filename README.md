@@ -36,10 +36,10 @@ which only take a nybble each.
 A variable length integer is encoded on one or more bytes in the following format:
 Start with a "prefix" which the number of bits to offset into the first byte.
 A prefix of zero means to use the whole byte. A prefix of 3 means to use the least
-significant 5 bits. Of these bits there are N-1 data bits and 1 stop bit. At the end
-of each byte encoding a variable length integer there is either a 0 or 1. If the value
-is 1 then the integer is complete otherwise there is another byte to consume. All data is
-shifted by 7 bits and the next byte is added and processed similarly.
+significant 5 bits. Of these bits there are N-1 data bits and 1 stop bit.  If the value
+is 1 in the most significant bit (after accounting for prefix) then the integer is complete
+otherwise there is another byte to consume. All data is shifted by 7 bits and the next byte
+is added and processed similarly.
 
 Within this specification a variable-length integer is called a `varint(prefix)`.
 
@@ -47,7 +47,7 @@ Here's what the integer 1283 would look like represented with a prefix of 3:
 
 ```
 +-----+------------+------------+
-| xxx | 0000101[0] | 0000011[1] |
+| xxx | [0]0000101 | [1]0000011 |
 +-----+------------+------------+
 
 where
