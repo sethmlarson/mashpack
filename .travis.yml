@@ -1,0 +1,12 @@
+sudo: false
+language: python
+python: 3.6
+
+install:
+  - python -m pip install pytest hypothesis coverage
+
+script:
+  - pytest tests/ -v --cov mshpck
+
+after_script:
+  - coverage -m
