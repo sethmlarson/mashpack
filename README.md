@@ -118,9 +118,9 @@ MAPT:
 +------+-----------+============================+=====================================+
 
 MAPSTR:
-+-----++-----------+=====================+============================+
++------+-----------+=====================+============================+
 | 0001 | varint(4) | N NUL-separated STR | N mashpack-encoded objects |
-+-----++-----------+=====================+============================+
++------+-----------+=====================+============================+
 ```
 
 ### Strings (`STR` and `BIN`)
@@ -141,9 +141,9 @@ BIN:
 
 ```
 MATRIX:
-+------+-----------+---+-----------+==============================+
-| 0100 | varint(4) | X | varint(7) | N*M mashpack-encoded objects |
-+------+-----------+---+-----------+==============================+
++------+-----------+-----------+===========================+=================================+
+| 0100 | varint(4) | varint(8) | 1 mashpack object w/ type | N*M-1 mashpack objects w/o type |
++------+-----------+-----------+===========================+=================================+
 ```
 
 ### Bools (`TRUE` and `FALSE`)
@@ -216,21 +216,21 @@ EXT:
 
 - `MATRIX` which is where a list of lists can be condensed into a single list
   and only encode the lengths of the two dimensions. This can be done if the system
-  detects `ARRAY[ARRAY]` and all inner `ARRAY`s are the same length.
+  detects `ARRAYT[ARRAYT[TYPE]]` and all inner `ARRAYT`s are the same length.
   
   There's also great potential in encoding large arrays as instead of `VARINT(3)` for
-  encoding the length of the arrays the length is encoded in `VARINT(0)` which can
+  encoding the length of the arrays the length is encoded in `VARINT(7)` which can
   store much larger values. Potential for use in graphics, data science, and machine learning.
   
   Example:
   ```
-  Encoding [[1], [1], [1]] comparison between ARRAY[ARRAY] and MATRIX
+  Encoding [[1.0], [1.0], [1.0]] comparison between ARRAY[ARRAY] and MATRIX
 
   ARRAY[ARRAY]
-  b100|10011[b100|10001[b101|10001],b100|10001[b101|10001],b100|10001[b101|10001]] (7 bytes)
+  b100|10011[b100|10001[b01110011[FLOAT],b100|10001[b01110011[FLOAT],b100|10001[b01110011[FLOAT]] (31 bytes)
   
   MATRIX
-  b0111|0000,10000011,10000001[b101|10001,b101|10001,b101|10001] (6 bytes)
+  b0100|0011,b1000001[b01110011[FLOAT],[FLOAT],[FLOAT]] (27 bytes)
   ```
 
 - `MAPSTR` which is a map where all keys are `STR` without `0x00` bytes. This is a common
