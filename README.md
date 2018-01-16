@@ -17,19 +17,19 @@ in order to achieve superior JSON-object compression. mshpck has the same interf
 | INT       | `b101`      | 3             |
 | MAP       | `b110`      | 3             |
 | STR       | `b111`      | 3             |
-| FALSE     | `b0000`     | 4             |
-| TRUE      | `b0001`     | 4             |
+| UNUSED    | `b0000`     | 4             |
+| MAPSTR    | `b0001`     | 4             |
 | ARRAYT    | `b0010`     | 4             |
 | MAPT      | `b0011`     | 4             |
-| NULL      | `b0100`     | 4             |
+| MATRIX    | `b0100`     | 4             |
 | NEGINT    | `b0101`     | 4             |
 | BIN       | `b0110`     | 4             |
-| EXT       | `b0111`     | 4             |
-| MATRIX    | `b01110000` | 8             |
+| NULL      | `b01110000` | 8             |
 | TIMESTAMP | `b01110001` | 8             |
 | FLOAT32   | `b01110010` | 8             |
 | FLOAT64   | `b01110011` | 8             |
-| MAPSTR    | `b01110100` | 8             |
+| FALSE     | `b01110100` | 8             |
+| TRUE      | `b01110101` | 8             |
 
 ### Variable-Length Integers
 
@@ -103,49 +103,49 @@ bin:
 +------+-----------+========================+
 ```
 
-### Bools (`true` and `false`)
+### Bools (`TRUE` and `FALSE`)
 
 ```
-false:
-+------+
-| 0000 |
-+------+
+FALSE:
++----------+
+| 01110100 |
++----------+
 
-true:
-+------+
-| 0001 |
-+------+
+TRUE:
++----------+
+| 01110100 |
++----------+
 ```
 
-### Floats (`float32` and `float64`)
+### Floats (`FLOAT32` and `FLOAT64`)
 
 ```
 float32:
-+------+=================================+
-| 0010 | IEEE 754 single precision float |
-+------+=================================+
++----------+=================================+
+| 01110010 | IEEE 754 single precision float |
++----------+=================================+
 
 float64:
-+------+=================================+
-| 0011 | IEEE 754 double precision float |
-+------+=================================+
++----------+=================================+
+| 01110011 | IEEE 754 double precision float |
++----------+=================================+
 ```
 
-### Null (`null`)
+### Null (`NULL`)
 
 ```
 null:
-+------+
-| 0100 |
-+------+
++----------+
+| 01110000 |
++----------+
 ```
 
-### Extensions (`ext`)
+### Extensions (`EXT`)
 
 ```
 ext:
 +------+-----------+
-| 0100 | varint(4) |
+| 0111 | ext type  |
 +------+-----------+
 ```
 
@@ -198,6 +198,9 @@ ext:
 
 - User-defined `EXT` types. b01110000 to b01110111 are reserved for use by mshpck.
 
+## Comparison to JSON and MsgPack
+
+TODO
 
 ## Implementations
 
