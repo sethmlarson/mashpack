@@ -7,6 +7,9 @@ for packing JSON-like objects into binary and [HTTP/2 HPACK](https://http2.githu
 for encoding [variable-length integers](https://http2.github.io/http2-spec/compression.html#rfc.section.5.1)
 in order to achieve superior JSON-object compression. mshpck has the same interface as MessagePack including extensions.
 
+This repository also serves as a "reference-implementation" of the specification in Python. The specification and
+implementation are currently works in progress, feel free to contribute with a pull request!
+
 ## Specification
 
 ### Data Types Overview
@@ -231,13 +234,15 @@ EXT:
 
 - User-defined `EXT` types. b01110000 to b01110111 are reserved for use by mshpck.
 
+- Implement a pure-Python version of the specification as well as a Cython implementation.
+
 ## Comparison to JSON and MsgPack
 
 TODO
 
 ## Implementations
 
-- [Python](https://github.com/SethMichaelLarson/mshpack)
+- [Python](https://github.com/SethMichaelLarson/mshpack) (WIP)
 
 ## License
 
