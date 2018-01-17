@@ -27,13 +27,13 @@ explanations as to why these changes were made:
   |-----------------------|--------------------|----------------------|
   | `MAPP vs fixmap`      | 0 to 63 key-values | 0 to 15 key-values   |
   | `STRP vs fixstr`      | 0 to 63 characters | 0 to 31 characters   |
-  | `TARRAYP vs fixarray` | 0 to 31 elements\* | 0 to 15 elements     |
+  | `ARRAYP vs fixarray`  | 0 to 31 elements\* | 0 to 15 elements     |
   | `NINTP vs nfixint`    | -1 to -32          | -1 to -32            |
   | `INTP vs pfixint`     | 0 to 31            | 0 to 127             |
 
-  \* Must be the same type. See explanation of `TARRAYP` below.
+  \* Must be the same type. See explanation of `ARRAYP` below.
 
-- Mashpack adds 'typed' array types which all have the name `TARRAY*`. These
+- Mashpack adds 'typed' array types which all have the name `ARRAY*`. These
   function, pack, and unpack exactly the same as normal arrays except they
   take advantage of having the same type of object within them in order to
   compress tighter together only requiring the type information of all
@@ -47,17 +47,17 @@ explanations as to why these changes were made:
   machine learning algorithms. These objects vastly reduce the overhead of
   storing large amounts of data that all have the same data type.
 
-  Below is an example of how a `ARRAY16`, `TARRAY16`, and `MATRIX16` would encode a
+  Below is an example of how a `MARRAY16`, `ARRAY16`, and `MATRIX16` would encode a
   512x512 matrix of `FLOAT32` values. Because the amount of data from the `FLOAT32` is
   constant among the three we only list the amount of header bytes:
 
   ```
-  Encoding a 512x512 matrix of FLOAT32 into ARRAY16[ARRAY16], TARRAY16[TARRAY16] and MATRIX16
+  Encoding a 512x512 matrix of FLOAT32 into MARRAY16[MARRAY16], ARRAY16[ARRAY16] and MATRIX16
 
-  ARRAY16[ARRAY16]
+  MARRAY16[MARRAY16]
   b11101000,b00100000[b11101000,b00100000[b11111001,FLOAT]*512]*512 (263,170 header bytes)
 
-  TARRAY16[TARRAY16]
+  ARRAY16[ARRAY16]
   b11101011,b11101011,[b00100000,b11111001[FLOAT*512]]*512 (1,026 header bytes)
 
   MATRIX
@@ -87,12 +87,12 @@ explanations as to why these changes were made:
 | STR8      | `11100101` | `0xE5`      |
 | STR16     | `11100110` | `0xE6`      |
 | STR32     | `11100111` | `0xE7`      |
-| MARRAY8   | `11101000` | `0xE8`      |
-| MARRAY16  | `11101001` | `0xE9`      |
-| MARRAY32  | `11101010` | `0xEA`      |
-| ARRAY8    | `11101011` | `0xEB`      |
-| ARRAY16   | `11101100` | `0xEC`      |
-| ARRAY32   | `11101101` | `0xED`      |
+| ARRAY8    | `11101000` | `0xE8`      |
+| ARRAY16   | `11101001` | `0xE9`      |
+| ARRAY32   | `11101010` | `0xEA`      |
+| MARRAY8   | `11101011` | `0xEB`      |
+| MARRAY16  | `11101100` | `0xEC`      |
+| MARRAY32  | `11101101` | `0xED`      |
 | BIN8      | `11101110` | `0xEE`      |
 | BIN16     | `11101111` | `0xEF`      |
 | BIN32     | `11110000` | `0xF0`      |
