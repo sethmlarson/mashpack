@@ -6,7 +6,7 @@ install:
   - python -m pip install pytest hypothesis coverage
 
 script:
-  - pytest tests/ -v --cov mshpck
+  - pytest tests/ -v --cov mashpack
 
 after_script:
   - coverage -m

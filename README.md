@@ -76,7 +76,7 @@ explanations as to why these changes were made:
 |-----------|------------|-------------|
 | MAPP      | `00xxxxxx` | `0x00-0x3F` |
 | STRP      | `01xxxxxx` | `0x40-0x7F` |
-| TARRAYP   | `100xxxxx` | `0x80-0x9F` |
+| ARRAYP    | `100xxxxx` | `0x80-0x9F` |
 | INTP      | `101xxxxx` | `0xA0-0xBF` |
 | NINTP     | `110xxxxx` | `0xC0-0xDF` |
 | FALSE     | `11100000` | `0xE0`      |
@@ -87,12 +87,12 @@ explanations as to why these changes were made:
 | STR8      | `11100101` | `0xE5`      |
 | STR16     | `11100110` | `0xE6`      |
 | STR32     | `11100111` | `0xE7`      |
-| ARRAY8    | `11101000` | `0xE8`      |
-| ARRAY16   | `11101001` | `0xE9`      |
-| ARRAY32   | `11101010` | `0xEA`      |
-| TARRAY8   | `11101011` | `0xEB`      |
-| TARRAY16  | `11101100` | `0xEC`      |
-| TARRAY32  | `11101101` | `0xED`      |
+| MARRAY8   | `11101000` | `0xE8`      |
+| MARRAY16  | `11101001` | `0xE9`      |
+| MARRAY32  | `11101010` | `0xEA`      |
+| ARRAY8    | `11101011` | `0xEB`      |
+| ARRAY16   | `11101100` | `0xEC`      |
+| ARRAY32   | `11101101` | `0xED`      |
 | BIN8      | `11101110` | `0xEE`      |
 | BIN16     | `11101111` | `0xEF`      |
 | BIN32     | `11110000` | `0xF0`      |
@@ -122,11 +122,7 @@ explanations as to why these changes were made:
 
 `TODO`
 
-### Typed Array Family (`TARRAYP`, `TARRAY8`, `TARRAY16`, `TARRAY32`)
-
-`TODO`
-
-### Array Family (`ARRAY8`, `ARRAY16`, `ARRAY32`)
+### Array Family (`ARRAYP`, `ARRAY8`, `ARRAY16`, `ARRAY32`, `MARRAY8`, `MARRAY16`, `MARRAY32`)
 
 `TODO`
 
