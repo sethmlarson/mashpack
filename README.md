@@ -1,9 +1,10 @@
 # Mashpack
 
 Mashpack is a JSON-object serialization and compression specification
-that is very similar in design to [MessagePack](https://msgpack.org)
+inspired by [MessagePack](https://msgpack.org)
 but is tweaked for optimizing for common JSON objects and for data
-structures and layouts used commonly in data science and machine learning.
+structures and layouts used commonly in data science, image processing,
+and machine learning.
 
 There are a few notable changes between Mashpack and MessagePack along with
 explanations as to why these changes were made:
@@ -14,7 +15,8 @@ explanations as to why these changes were made:
 
   These prefixed data types are the ones that can be described with only a single
   byte of header information and are constrained to a range of values to maintain
-  this property.
+  this property. The more data that can fit into these types the less often
+  the packer will have to add additional header bytes.
 
   | Spec        | Prefixes                                                                   |
   |-------------|----------------------------------------------------------------------------|
@@ -24,7 +26,7 @@ explanations as to why these changes were made:
   | Data Type             | Range in Mashpack  | Range in MessagePack |
   |-----------------------|--------------------|----------------------|
   | `MAPP vs fixmap`      | 0 to 63 key-values | 0 to 15 key-values   |
-  | `STRP vs fixstr`      | 0 to 63 characters | 0 to 15 characters   |
+  | `STRP vs fixstr`      | 0 to 63 characters | 0 to 31 characters   |
   | `TARRAYP vs fixarray` | 0 to 31 elements\* | 0 to 15 elements     |
   | `NINTP vs nfixint`    | -1 to -32          | -1 to -32            |
   | `INTP vs pfixint`     | 0 to 31            | 0 to 127             |
@@ -38,13 +40,6 @@ explanations as to why these changes were made:
   objects within the array at the beginning of the array. In most cases arrays
   will all be of similar type and so this situation happens quite frequently
   within common JSON objects.
-
-- Mashpack sheds the `STR8` and `MAP8` types in favor of larger single-byte
-  `STRP` and `MAPP` data types. This means that a string or map that is larger
-  than 63 elements must instead use `STR16` or `MAP16` which have 3 bytes of header.
-  This decision was made because maps that large are rare and strings that large
-  will be data-heavy anyways just by nature of what a string is so the extra byte
-  won't be felt as a percentage of the packed object compared to constant size object.
 
 - Mashpack adds the `MATRIX16` and `MATRIX32` objects which are essentially optimized
   versions of `TARRAY16[TARRAY16]` and `TARRAY32[TARRAY32]` objects. They're
@@ -86,21 +81,21 @@ explanations as to why these changes were made:
 | NINTP     | `110xxxxx` | `0xC0-0xDF` |
 | FALSE     | `11100000` | `0xE0`      |
 | TRUE      | `11100001` | `0xE1`      |
-| MAP16     | `11100010` | `0xE2`      |
-| MAP32     | `11100011` | `0xE3`      |
-| STR16     | `11100100` | `0xE4`      |
-| STR32     | `11100101` | `0xE5`      |
-| STR64     | `11100110` | `0xE6`      |
-| ARRAY8    | `11100111` | `0xE7`      |
-| ARRAY16   | `11101000` | `0xE8`      |
-| ARRAY32   | `11101001` | `0xE9`      |
-| TARRAY8   | `11101010` | `0xEA`      |
-| TARRAY16  | `11101011` | `0xEB`      |
-| TARRAY32  | `11101100` | `0xEC`      |
-| BIN8      | `11101101` | `0xED`      |
-| BIN16     | `11101110` | `0xEE`      |
-| BIN32     | `11101111` | `0xEF`      |
-| BIN64     | `11110000` | `0xF0`      |
+| MAP8      | `11100010` | `0xE2`      |
+| MAP16     | `11100011` | `0xE3`      |
+| MAP32     | `11100100` | `0xE4`      |
+| STR8      | `11100101` | `0xE5`      |
+| STR16     | `11100110` | `0xE6`      |
+| STR32     | `11100111` | `0xE7`      |
+| ARRAY8    | `11101000` | `0xE8`      |
+| ARRAY16   | `11101001` | `0xE9`      |
+| ARRAY32   | `11101010` | `0xEA`      |
+| TARRAY8   | `11101011` | `0xEB`      |
+| TARRAY16  | `11101100` | `0xEC`      |
+| TARRAY32  | `11101101` | `0xED`      |
+| BIN8      | `11101110` | `0xEE`      |
+| BIN16     | `11101111` | `0xEF`      |
+| BIN32     | `11110000` | `0xF0`      |
 | INT8      | `11110001` | `0xF1`      |
 | INT16     | `11110010` | `0xF2`      |
 | INT32     | `11110011` | `0xF3`      |
@@ -117,11 +112,13 @@ explanations as to why these changes were made:
 | EXT32     | `11111110` | `0xFE`      |
 | NULL      | `11111111` | `0xFF`      |
 
-### Map Family (`MAPP`, `MAP16`, `MAP32`)
+### Map Family (`MAPP`, `MAP8`, `MAP16`, `MAP32`)
 
-`TODO`
+```
 
-### String Family (`STRP`, `STR16`, `STR32`, `STR64`)
+```
+
+### String Family (`STRP`, `STR8`, `STR16`, `STR32`)
 
 `TODO`
 
@@ -133,25 +130,110 @@ explanations as to why these changes were made:
 
 `TODO`
 
-### Binary Family (`BINP`, `BIN8`, `BIN16`, `BIN32`, `BIN64`)
+### Binary Family (`BIN8`, `BIN16`, `BIN32`)
 
 `TODO`
 
-### Unsigned Integer Family (`UINTP`, `UINT8`, `UINT16`, `UINT32`, `UINT64`)
+### Integer Family (`INTP`, `NINTP`, `UINT8`, `UINT16`, `UINT32`, `UINT64`, `INT8`, `INT16`, `INT32`, `INT64`)
 
-`TODO`
+`INT` format stores a signed or unsigned integer in 1, 2, 3, 5, or 9 bytes.
 
-### Signed Integer Family (`INT8`, `INT16`, `INT32`, `INT64`)
+```
+INTP stores 5-bit positive integer
++--------+
+|101XXXXX|
++--------+
+where XXXXX is a 5-bit unsigned integer
 
-`TODO`
+NINTP stores 5-bit negative integer
++--------+
+|110YYYYY|
++--------+
+where YYYYY is a 5-bit unsigned integer
+
+
+INT8 stores 8-bit signed integer
++--------+--------+
+|  0xF1  |XXXXXXXX|
++--------+--------+
+where XXXXXXXX is an 8-bit signed integer
+
+INT16 stores 16-bit signed integer
++--------+--------+--------+
+|  0xF2  |XXXXXXXX|XXXXXXXX|
++--------+--------+--------+
+where XXXXXXXX_XXXXXXXX is an 16-bit unsigned integer
+
+INT32 stores 32-bit signed integer
++--------+--------+--------+--------+--------+
+|  0xF3  |XXXXXXXX|XXXXXXXX|XXXXXXXX|XXXXXXXX|
++--------+--------+--------+--------+--------+
+where XXXXXXXX_XXXXXXXX_XXXXXXXX_XXXXXXXX is an 32-bit signed integer
+
+INT64 stores 64-bit signed integer
++--------+--------+--------+--------+--------+--------+--------+--------+--------+
+|  0xF4  |XXXXXXXX|XXXXXXXX|XXXXXXXX|XXXXXXXX|XXXXXXXX|XXXXXXXX|XXXXXXXX|XXXXXXXX|
++--------+--------+--------+--------+--------+--------+--------+--------+--------+
+where XXXXXXXX_XXXXXXXX_XXXXXXXX_XXXXXXXX_XXXXXXXX_XXXXXXXX_XXXXXXXX_XXXXXXXX is an 64-bit signed integer
+
+
+UINT8 stores 8-bit unsigned integer
++--------+--------+
+|  0xF1  |XXXXXXXX|
++--------+--------+
+where XXXXXXXX is an 8-bit unsigned integer
+
+UINT16 stores 16-bit unsigned integer
++--------+--------+--------+
+|  0xF2  |XXXXXXXX|XXXXXXXX|
++--------+--------+--------+
+where XXXXXXXX_XXXXXXXX is an 16-bit unsigned integer
+
+UINT32 stores 32-bit unsigned integer
++--------+--------+--------+--------+--------+
+|  0xF3  |XXXXXXXX|XXXXXXXX|XXXXXXXX|XXXXXXXX|
++--------+--------+--------+--------+--------+
+where XXXXXXXX_XXXXXXXX_XXXXXXXX_XXXXXXXX is an 32-bit unsigned integer
+
+UINT64 stores 64-bit unsigned integer
++--------+--------+--------+--------+--------+--------+--------+--------+--------+
+|  0xF4  |XXXXXXXX|XXXXXXXX|XXXXXXXX|XXXXXXXX|XXXXXXXX|XXXXXXXX|XXXXXXXX|XXXXXXXX|
++--------+--------+--------+--------+--------+--------+--------+--------+--------+
+where XXXXXXXX_XXXXXXXX_XXXXXXXX_XXXXXXXX_XXXXXXXX_XXXXXXXX_XXXXXXXX_XXXXXXXX is an 64-bit unsigned integer
+```
 
 ### Boolean Family (`FALSE`, `TRUE`)
 
-`TODO`
+`BOOL` format stores a true or false in one byte.
+
+```
+false:
++--------+
+|  0xE0  |
++--------+
+
+true:
++--------+
+|  0xE1  |
++--------+
+```
 
 ### Float Family (`FLOAT32`, `FLOAT64`)
 
-`TODO`
+```
+FLOAT32 stores IEEE 754 single precision floating point number.
++--------+--------+--------+--------+--------+
+|  0xF9  |XXXXXXXX|XXXXXXXX|XXXXXXXX|XXXXXXXX|
++--------+--------+--------+--------+--------+
+where XXXXXXXX_XXXXXXXX_XXXXXXXX_XXXXXXXX is a big-endian IEEE 754 single precision float point number.
+
+FLOAT64 stores IEEE 754 double precision floating point number.
++--------+--------+--------+--------+--------+--------+--------+--------+--------+
+|  0xFA  |XXXXXXXX|XXXXXXXX|XXXXXXXX|XXXXXXXX|XXXXXXXX|XXXXXXXX|XXXXXXXX|XXXXXXXX|
++--------+--------+--------+--------+--------+--------+--------+--------+--------+
+where XXXXXXXX_XXXXXXXX_XXXXXXXX_XXXXXXXX_XXXXXXXX_XXXXXXXX_XXXXXXXX_XXXXXXXX is a big-endian
+IEEE 754 double precision floating point number
+```
 
 ### Matrix Family (`MATRIX16`, `MATRIX32`)
 
@@ -163,7 +245,13 @@ explanations as to why these changes were made:
 
 ### Null Family (`NULL`)
 
-`TODO`
+`NULL` format stores a null/nil/none value in 1 byte.
+
+```
++--------+
+|  0xFF  |
++--------+
+```
 
 ## Future Improvements
 
