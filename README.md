@@ -33,16 +33,20 @@ explanations as to why these changes were made:
 
   \* Must be the same type. See explanation of `ARRAYP` below.
 
-- Mashpack adds 'typed' array types which all have the name `ARRAY*`. These
-  function, pack, and unpack exactly the same as normal arrays except they
+- Mashpack defaults to 'typed' arrays which all have the name `ARRAY*`. These
+  function, pack, and unpack exactly the same as mixed arrays except they
   take advantage of having the same type of object within them in order to
   compress tighter together only requiring the type information of all
   objects within the array at the beginning of the array. In most cases arrays
   will all be of similar type and so this situation happens quite frequently
   within common JSON objects.
 
+- To use an array with mixed element types the `MARRAY*` (mixed array) data type
+  is used. Note that there is no `MARRAYP` data type meaning mixed arrays always have
+  2 bytes in their header regardless of size.
+
 - Mashpack adds the `MATRIX16` and `MATRIX32` objects which are essentially optimized
-  versions of `TARRAY16[TARRAY16]` and `TARRAY32[TARRAY32]` objects. They're
+  versions of `ARRAY16[ARRAY16]` and `ARRAY32[ARRAY32]` objects. They're
   useful for storing data frames, matricies, graphs, and data that is used for
   machine learning algorithms. These objects vastly reduce the overhead of
   storing large amounts of data that all have the same data type.
@@ -55,13 +59,13 @@ explanations as to why these changes were made:
   Encoding a 512x512 matrix of FLOAT32 into MARRAY16[MARRAY16], ARRAY16[ARRAY16] and MATRIX16
 
   MARRAY16[MARRAY16]
-  b11101000,b00100000[b11101000,b00100000[b11111001,FLOAT]*512]*512 (263,170 header bytes)
+  b11101000,b00000000,b00100000[b11101000,b00000000,b00100000[b11111001,FLOAT]*512]*512 (263,683 header bytes)
 
   ARRAY16[ARRAY16]
-  b11101011,b11101011,[b00100000,b11111001[FLOAT*512]]*512 (1,026 header bytes)
+  b11101011,b11101011,[b00000000,b00100000,b11111001[FLOAT*512]]*512 (1,538 header bytes)
 
-  MATRIX
-  b11111011,b00100000,b00100000,b11111001[FLOAT*262144] (4 header bytes)
+  MATRIX16
+  b11111011,b00000000,b00100000,b00000000,b00100000,b11111001[FLOAT*262144] (6 header bytes)
   ```
 
 - Mashpack sheds a lot of the `EXT*` data types that are used in MessagePack in favor
