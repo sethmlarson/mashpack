@@ -25,11 +25,13 @@ explanations as to why these changes were made:
 
   | Data Type             | Range in Mashpack  | Range in MessagePack |
   |-----------------------|--------------------|----------------------|
-  | `MAPP vs fixmap`      | 0 to 63 key-values | 0 to 15 key-values   |
-  | `STRP vs fixstr`      | 0 to 63 characters | 0 to 31 characters   |
+  | `MAPP vs fixmap`      | 0 to 31 key-values | 0 to 15 key-values   |
+  | `STRP vs fixstr`      | 0 to 31 characters | 0 to 31 characters   |
   | `ARRAYP vs fixarray`  | 0 to 31 elements\* | 0 to 15 elements     |
+  | `MARRAYP vs fixarray` | 0 to 31 elements   | 0 to 15 elements     |
   | `NINTP vs nfixint`    | -1 to -32          | -1 to -32            |
   | `INTP vs pfixint`     | 0 to 31            | 0 to 127             |
+  | `EXTP vs fixext`      | 0 to 31            | N/A                  |
 
   \* Must be the same type. See explanation of `ARRAYP` below.
 
@@ -40,10 +42,19 @@ explanations as to why these changes were made:
   objects within the array at the beginning of the array. In most cases arrays
   will all be of similar type and so this situation happens quite frequently
   within common JSON objects.
+  
+  Typed arrays are allowed to do type conversion of `*P` objects into their `*8`
+  counterparts. For example:
+  
+  ```
+  [1, 255, 255, 255] would be converted to MARRAYP[INTP[1], INT8[255], INT8[255], INT8[255]]
+  which is 8 bytes but could be converted to ARRAYP[INT8[1], INT8[255], INT8[255], INT8[255]]
+  which is 6 bytes by changing the sole INTP to INT8.
+  ```
 
 - To use an array with mixed element types the `MARRAY*` (mixed array) data type
-  is used. Note that there is no `MARRAYP` data type meaning mixed arrays always have
-  2 bytes in their header regardless of size.
+  is used. This carries a compression penalty that puts array size in-line with
+  MessagePack's arrays.
 
 - Mashpack adds the `MATRIX16` and `MATRIX32` objects which are essentially optimized
   versions of `ARRAY16[ARRAY16]` and `ARRAY32[ARRAY32]` objects. They're
@@ -69,7 +80,7 @@ explanations as to why these changes were made:
   ```
 
 - Mashpack sheds a lot of the `EXT*` data types that are used in MessagePack in favor
-  of just two: `EXT8` and `EXT32`. Mashpack reserves all `EXT` codes that have a `1`
+  of just three: `EXTP`, `EXT8` and `EXT32`. Mashpack reserves all `EXT` codes that have a `1`
   in the most significant bit of their extension code.
 
 ## Specification
@@ -78,11 +89,13 @@ explanations as to why these changes were made:
 
 | Data Type | Prefix     | First Byte  |
 |-----------|------------|-------------|
-| MAPP      | `00xxxxxx` | `0x00-0x3F` |
-| STRP      | `01xxxxxx` | `0x40-0x7F` |
-| ARRAYP    | `100xxxxx` | `0x80-0x9F` |
-| INTP      | `101xxxxx` | `0xA0-0xBF` |
-| NINTP     | `110xxxxx` | `0xC0-0xDF` |
+| MAPP      | `000xxxxx` | `0x00-0x1F` |
+| STRP      | `001xxxxx` | `0x20-0x3F` |
+| ARRAYP    | `010xxxxx` | `0x40-0x5F` |
+| MARRAYP   | `011xxxxx` | `0x60-0x7F` |
+| INTP      | `100xxxxx` | `0x80-0x9F` |
+| NINTP     | `101xxxxx` | `0xA0-0xBF` |
+| EXTP      | `110xxxxx` | `0xC0-0xDF` |
 | FALSE     | `11100000` | `0xE0`      |
 | TRUE      | `11100001` | `0xE1`      |
 | MAP8      | `11100010` | `0xE2`      |
@@ -255,11 +268,14 @@ IEEE 754 double precision floating point number
 
 ## Future Improvements
 
-- Handling of `TARRAY*[TRUE/FALSE]` and `MATRIX*[TRUE/FALSE]` to pack into binary
+- Handling of `ARRAY*[TRUE/FALSE]` and `MATRIX*[TRUE/FALSE]` to pack into binary
 
-- Handling of `TARRAY*`, and `MATRIX*` with item types that are in the 'constant' category
+- Handling of `ARRAY*`, and `MATRIX*` with item types that are in the 'constant' category
   such as `NULL`, `TRUE`, and `FALSE` which would literally map as a header
   with length information.
+  
+- Handling and logic of recognizing `MARRAY[*P and *8]` being converted to `ARRAY[*8]`
+  when space would be saved by this operation.
 
 - Implement a pure-Python version of the specification as well as a Cython implementation.
 
