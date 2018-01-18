@@ -54,6 +54,11 @@ explanations as to why these changes were made:
 - Mashpack sheds a lot of the `EXT*` data types that are used in MessagePack in favor
   of just three: `EXT8`, `EXT16`, and `EXT32`. Mashpack reserves all `EXT` codes that have a `1`
   in the most significant bit of their extension code.
+  
+The majority of the code in this repository is sourced from or directly inspired from
+[`msgpack/msgpack-python`](https://github.com/msgpack/msgpack-python). Files are listed
+with the copyright and license information of both the original MessagePack code and
+the changes. Both projects are licensed under Apache-2.0. See LICENSE.
 
 ## Specification
 

@@ -12,12 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from ._fallback import Packer, Unpacker, unpack, unpackb
+from ._fallback import Packer, Unpacker, unpack, unpackb, ARRAY
 
 __all__ = [
     'Packer', 'Unpacker',
     'pack', 'packb', 'unpack', 'unpackb',
-    'dump', 'dumps', 'load', 'loads'
+    'dump', 'dumps', 'load', 'loads',
+    'ARRAY'
 ]
 
 

@@ -20,10 +20,35 @@ from mashpack.exceptions import OutOfData, BufferFull
 
 if hasattr(sys, 'pypy_version_info'):
     from __pypy__ import newlist_hint
+    from __pypy__ import BytesBuilder
+
+    class BytesIO(object):
+        def __init__(self, s=b''):
+            if s:
+                self.builder = BytesBuilder(len(s))
+                self.builder.append(s)
+            else:
+                self.builder = BytesBuilder()
+
+        def write(self, s):
+            if isinstance(s, memoryview):
+                s = s.tobytes()
+            elif isinstance(s, bytearray):
+                s = bytes(s)
+            self.builder.append(s)
+
+        def getvalue(self):
+            return self.builder.build()
+
+    _USING_BYTESBUILDER = True
 else:
+    from io import BytesIO
     newlist_hint = lambda _: []
+    _USING_BYTESBUILDER = False
+
 
 _DEFAULT_MAX_LEN = 2**31-1
+_DEFAULT_NEST_LIMIT = 511
 
 _TYPE_IMMEDIATE = 0
 _TYPE_MAP = 1
@@ -33,6 +58,7 @@ _TYPE_BIN = 4
 _TYPE_MARRAY = 5
 _TYPE_EXT = 6
 
+_STRUCT_UINT8 = struct.Struct('B')
 _STRUCT_UINT16 = struct.Struct('>H')
 _STRUCT_UINT32 = struct.Struct('>I')
 _STRUCT_UINT64 = struct.Struct('>Q')
@@ -74,8 +100,12 @@ def unpackb(data, **kwargs):
     return ret
 
 
+class ARRAY(list):
+    pass
+
+
 class Unpacker(object):
-    def __init__(self, file_like=None,
+    def __init__(self, file_like=None, *,
                  read_size=0,
                  object_hook=None,
                  object_pairs_hook=None,
@@ -584,4 +614,205 @@ class Unpacker(object):
 
 
 class Packer(object):
-    pass
+    def __init__(self, *, default=None,
+                 use_float32=False,
+                 use_array=False,
+                 autoreset=True):
+        self._default = default
+        self._use_float32 = use_float32
+        self._use_array = use_array
+        self._autoreset = autoreset
+
+        if default is not None:
+            if not callable(default):
+                raise TypeError('default must be callable')
+        self._default = default
+
+        self._buffer = BytesIO()
+
+    def pack(self, obj) -> bytes:
+        try:
+            self._pack(obj)
+        except:
+            self._buffer = BytesIO()
+            raise
+        ret = self._buffer.getvalue()
+        if self._autoreset:
+            self._buffer = BytesIO()
+        elif _USING_BYTESBUILDER:
+            self._buffer = BytesIO(ret)
+        return ret
+
+    def pack_map_header(self, n) -> bytes:
+        if n >= _DEFAULT_MAX_LEN:
+            raise PackValueError()
+        self._pack_map_header(n)
+        ret = self._buffer.getvalue()
+        if self._autoreset:
+            self._buffer = BytesIO()
+        elif _USING_BYTESBUILDER:
+            self._buffer = BytesIO(ret)
+        return ret
+
+    def pack_map_pairs(self, pairs) -> bytes:
+        self._pack_map_pairs(len(pairs), pairs)
+        ret = self._buffer.getvalue()
+        if self._autoreset:
+            self._buffer = BytesIO()
+        elif _USING_BYTESBUILDER:
+            self._buffer = BytesIO(ret)
+        return ret
+
+    def pack_array_header(self, n) -> bytes:
+        if n >= _DEFAULT_MAX_LEN:
+            raise PackValueError()
+        self._pack_array_header(n)
+        ret = self._buffer.getvalue()
+        if self._autoreset:
+            self._buffer = BytesIO()
+        elif _USING_BYTESBUILDER:
+            self._buffer = BytesIO(ret)
+        return ret
+
+    def _pack(self, obj, nest_limit=_DEFAULT_NEST_LIMIT):
+        default_used = False
+        while True:
+            if nest_limit < 0:
+                raise PackValueError('recursion limit exceeded')
+
+            # Packing NONE
+            if obj is None:
+                return self._buffer.write(b'\xFF')
+
+            # Packing TRUE
+            elif obj is True:
+                return self._buffer.write(b'\xE1')
+
+            # Packing FALSE
+            elif obj is False:
+                return self._buffer.write(b'\xE0')
+
+            # Packing MAP*
+            elif isinstance(obj, dict):
+                return self._pack_map_pairs(len(obj), obj.items(), nest_limit-1)
+
+            # Packing MARRAY*, TODO: ARRAY
+            elif isinstance(obj, list):
+                self._pack_array_header(len(obj))
+                item_next_limit = nest_limit-1
+                for item in obj:
+                    self._pack(item, item_next_limit)
+                return
+
+            # Packing INT* and UINT*
+            elif isinstance(obj, int):
+                # Packing UINT*
+                if obj >= 0:
+                    # Packing INTP
+                    if obj <= 0x1F:
+                        return self._buffer.write(_STRUCT_UINT8.pack(0xA0 + obj))
+
+                    # Packing UINT8
+                    elif obj <= 0xFF:
+                        return self._buffer.write(b'\xF5' + _STRUCT_UINT8.pack(obj))
+
+                    # Packing UINT16
+                    elif obj <= 0xFFFF:
+                        return self._buffer.write(b'\xF6' + _STRUCT_UINT16.pack(obj))
+
+                    # Packing UINT32:
+                    elif obj <= 0xFFFFFFFF:
+                        return self._buffer.write(b'\xF7' + _STRUCT_UINT32.pack(obj))
+
+                    # Packing UINT64
+                    elif obj <= 0xFFFFFFFFFFFFFFFF:
+                        return self._buffer.write(b'\xF8' + _STRUCT_UINT64.pack(obj))
+                    else:
+                        raise PackValueError('integer out of range')
+
+                # Packing NINTP
+                elif obj >= -0x20:
+                    return self._buffer.write(_STRUCT_UINT8.pack(0xC0 - obj + 1))
+
+                # Packing INT8
+                elif obj >= -0x80:
+                    return self._buffer.write(b'\xF1' + _STRUCT_INT8.pack(obj))
+
+                # Packing INT16
+                elif obj >= -0x80:
+                    return self._buffer.write(b'\xF2' + _STRUCT_INT16.pack(obj))
+
+                # Packing INT32
+                elif obj >= -0x80:
+                    return self._buffer.write(b'\xF3' + _STRUCT_INT32.pack(obj))
+
+                # Packing INT64
+                elif obj >= -0x80:
+                    return self._buffer.write(b'\xF4' + _STRUCT_INT64.pack(obj))
+
+                else:
+                    raise PackValueError('integer out of range')
+
+            # Packing STR*
+            elif isinstance(obj, str):
+                data = obj.encode('utf-8')
+                data_len = len(data)
+                if data_len <= 0x3F:
+                    return self._buffer.write(_STRUCT_UINT8.pack(0x40 + data_len) + data)
+                elif data_len <= 0xFF:
+                    return self._buffer.write(b'\xE5' + _STRUCT_UINT8.pack(data_len) + data)
+                elif data_len <= 0xFFFF:
+                    return self._buffer.write(b'\xE6' + _STRUCT_UINT16.pack(data_len) + data)
+                elif data_len <= 0xFFFFFFFF:
+                    return self._buffer.write(b'\xE7' + _STRUCT_UINT32.pack(data_len) + data)
+                else:
+                    raise PackValueError('string too large')
+
+            # Packing FLOAT32 and FLOAT64
+            elif isinstance(obj, float):
+                if self._use_float32:
+                    return self._buffer.write(b'\xF9' + _STRUCT_FLOAT32.pack(obj))
+                return self._buffer.write(b'\xFA' + _STRUCT_FLOAT64.pack(obj))
+
+            # Packing BIN*
+            elif isinstance(obj, (bytes, bytearray)):
+                pass  # TODO: BIN*
+            elif isinstance(obj, memoryview):
+                pass  # TODO: BIN*
+
+            # TODO EXT*
+
+            elif not default_used and self._default is not None:
+                obj = self._default(obj)
+                default_used = True
+                continue
+            raise TypeError(f'Cannot serialize {obj!r}')
+
+    def _pack_array_header(self, n):
+        if 0 < n <= 0x1F:
+            return self._buffer.write(_STRUCT_UINT8.pack(0x80 + n))
+        elif n <= 0xFF:
+            return self._buffer.write(b'\xEB' + _STRUCT_UINT8.pack(n))
+        elif n <= 0xFFFF:
+            return self._buffer.write(b'\xEC' + _STRUCT_UINT16.pack(n))
+        elif n <= 0xFFFFFFFF:
+            return self._buffer.write(b'\xED' + _STRUCT_UINT32.pack(n))
+
+    def _pack_map_header(self, n):
+        if 0 <= n <= 0x3F:
+            return self._buffer.write(_STRUCT_UINT8.pack(n))
+        elif n <= 0xFF:
+            return self._buffer.write(b'\xE2' + _STRUCT_UINT8.pack(n))
+        elif n <= 0xFFFF:
+            return self._buffer.write(b'\xE3' + _STRUCT_UINT16.pack(n))
+        elif n <= 0xFFFFFFFF:
+            return self._buffer.write(b'\xE4' + _STRUCT_UINT32.pack(n))
+        else:
+            raise PackValueError('map too large')
+
+    def _pack_map_pairs(self, n, pairs, nest_limit=_DEFAULT_NEST_LIMIT):
+        pair_nest_limit = nest_limit - 1
+        self._pack_map_header(n)
+        for k, v in pairs:
+            self._pack(k, pair_nest_limit)
+            self._pack(v, pair_nest_limit)

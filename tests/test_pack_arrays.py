@@ -15,6 +15,7 @@
 import pytest
 import mashpack
 
+
 @pytest.mark.parametrize(
     ['array', 'expected'],
     [([], b'\x80'),
@@ -38,9 +39,10 @@ def test_typed_marrayp_requires_3_elements_to_repack_to_array8():
     packed = mashpack.packb(array)
     assert packed == b'\xE8\x05\xF1\xFF\xFF\xFF'
 
+
 @pytest.mark.parametrize(
     ['array', 'expected'],
-    [([255] * 64, b'\xE8\x40\xF1' + ('\xFF' * 64))]
+    [([255] * 64, b'\xE8\x40\xF1' + (b'\xFF' * 64))]
 )
 def test_typed_marrayp_packed_to_array8(array, expected):
     packed = mashpack.packb(array)
