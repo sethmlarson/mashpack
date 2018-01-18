@@ -12,27 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from ._fallback import Packer, Unpacker, unpack, unpackb
 
-__all__ = [
-    'Packer', 'Unpacker',
-    'pack', 'packb', 'unpack', 'unpackb',
-    'dump', 'dumps', 'load', 'loads'
-]
+class BufferFull(Exception):
+    pass
 
 
-def pack(o, stream, **kwargs):
-    packer = Packer(**kwargs)
-    stream.write(packer.pack(o))
+class OutOfData(Exception):
+    pass
 
 
-def packb(o, **kwargs) -> bytes:
-    packer = Packer(**kwargs)
-    return packer.pack(o)
+class ExtraData(ValueError):
+    def __init__(self, unpacked, extra):
+        self.unpacked = unpacked
+        self.extra = extra
 
-
-# Compatibility with marshal/pickle
-load = unpack
-loads = unpackb
-dump = pack
-dumps = packb
+    def __str__(self):
+        return "unpack(b) received extra data."

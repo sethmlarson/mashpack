@@ -51,31 +51,8 @@ explanations as to why these changes were made:
   is used. This carries a compression penalty that puts array size in-line with
   MessagePack's arrays.
 
-- Mashpack adds the `MATRIX16` and `MATRIX32` objects which are essentially optimized
-  versions of `ARRAY16[ARRAY16]` and `ARRAY32[ARRAY32]` objects. They're
-  useful for storing data frames, matricies, graphs, and data that is used for
-  machine learning algorithms. These objects vastly reduce the overhead of
-  storing large amounts of data that all have the same data type.
-
-  Below is an example of how a `MARRAY16`, `ARRAY16`, and `MATRIX16` would encode a
-  512x512 matrix of `FLOAT32` values. Because the amount of data from the `FLOAT32` is
-  constant among the three we only list the amount of header bytes:
-
-  ```
-  Encoding a 512x512 matrix of FLOAT32 into MARRAY16[MARRAY16], ARRAY16[ARRAY16] and MATRIX16
-
-  MARRAY16[MARRAY16]
-  b11101000,b00000000,b00100000[b11101000,b00000000,b00100000[b11111001,FLOAT]*512]*512 (263,683 header bytes)
-
-  ARRAY16[ARRAY16]
-  b11101011,b11101011,[b00000000,b00100000,b11111001[FLOAT*512]]*512 (1,538 header bytes)
-
-  MATRIX16
-  b11111011,b00000000,b00100000,b00000000,b00100000,b11111001[FLOAT*262144] (6 header bytes)
-  ```
-
 - Mashpack sheds a lot of the `EXT*` data types that are used in MessagePack in favor
-  of just two: `EXT8` and `EXT32`. Mashpack reserves all `EXT` codes that have a `1`
+  of just three: `EXT8`, `EXT16`, and `EXT32`. Mashpack reserves all `EXT` codes that have a `1`
   in the most significant bit of their extension code.
 
 ## Specification
@@ -116,10 +93,10 @@ explanations as to why these changes were made:
 | UINT64    | `11111000` | `0xF8`      |
 | FLOAT32   | `11111001` | `0xF9`      |
 | FLOAT64   | `11111010` | `0xFA`      |
-| MATRIX16  | `11111011` | `0xFB`      |
-| MATRIX32  | `11111100` | `0xFC`      |
-| EXT8      | `11111101` | `0xFD`      |
-| EXT32     | `11111110` | `0xFE`      |
+| EXT8      | `11111011` | `0xFB`      |
+| EXT16     | `11111100` | `0xFC`      |
+| EXT32     | `11111101` | `0xFD`      |
+| RESERVED  | `11111110` | `0xFE`      |
 | NULL      | `11111111` | `0xFF`      |
 
 ### Map Family (`MAPP`, `MAP8`, `MAP16`, `MAP32`)
@@ -241,11 +218,7 @@ where XXXXXXXX_XXXXXXXX_XXXXXXXX_XXXXXXXX_XXXXXXXX_XXXXXXXX_XXXXXXXX_XXXXXXXX is
 IEEE 754 double precision floating point number
 ```
 
-### Matrix Family (`MATRIX16`, `MATRIX32`)
-
-`TODO`
-
-### Extension Family (`EXT8`, `EXT32`)
+### Extension Family (`EXT8`, `EXT16`, `EXT32`)
 
 `TODO`
 

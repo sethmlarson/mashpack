@@ -2,14 +2,21 @@ sudo: false
 language: python
 python: 3.6
 
+env:
+  - TEST_WITH_CYTHON=true
+  - TEST_WITH_CYTHON=false
+
 install:
-  - python -m pip install pytest hypothesis coverage
+  - python -m pip install -r dev-requirements.txt
 
 script:
   - pytest tests/ -v --cov mashpack
 
 after_script:
   - coverage -m
+
+after_success:
+  - codecov
 
 notifications:
   email: false
