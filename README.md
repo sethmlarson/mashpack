@@ -3,13 +3,12 @@
 Mashpack is a JSON-object serialization and compression specification
 inspired by [MessagePack](https://msgpack.org)
 but is tweaked for optimizing for common JSON objects and for data
-structures and layouts used commonly in data science, image processing,
-and machine learning.
+structures and layouts used commonly in data sciences.
 
 There are a few notable changes between Mashpack and MessagePack along with
 explanations as to why these changes were made:
 
-- Mashpack changes the order of the prefixing for data types from what MessagePack
+- Mashpack changes the order of the prefixing for data types from what Messagepack
   would describe as it's 'fixed' data types to be spread more evenly across
   common data types that are used in almost even JSON object.
 
@@ -21,9 +20,9 @@ explanations as to why these changes were made:
   | Spec        | Prefixes                                                                   |
   |-------------|----------------------------------------------------------------------------|
   | Mashpack    | `MAPP(2), STRP(2) MARRAYP(3) INTP(3)`                                      |
-  | MessagePack | `positive fixint(1), fixstr(3), negative fixint(3), fixmap(4) fixarray(4)` |
+  | Messagepack | `positive fixint(1), fixstr(3), negative fixint(3), fixmap(4) fixarray(4)` |
 
-  | Data Type             | Range in Mashpack  | Range in MessagePack |
+  | Data Type             | Range in Mashpack  | Range in Messagepack |
   |-----------------------|--------------------|----------------------|
   | `MAPP vs fixmap`      | 0 to 63 key-values | 0 to 15 key-values   |
   | `STRP vs fixstr`      | 0 to 63 bytes      | 0 to 31 characters   |
@@ -49,15 +48,15 @@ explanations as to why these changes were made:
 
 - To use an array with mixed element types the `MARRAY*` (mixed array) data type
   is used. This carries a compression penalty that puts array size in-line with
-  MessagePack's arrays.
+  Messagepack's arrays.
 
-- Mashpack sheds a lot of the `EXT*` data types that are used in MessagePack in favor
+- Mashpack sheds a lot of the `EXT*` data types that are used in Messagepack in favor
   of just three: `EXT8`, `EXT16`, and `EXT32`. Mashpack reserves all `EXT` codes that have a `1`
   in the most significant bit of their extension code.
   
 The majority of the code in this repository is sourced from or directly inspired from
 [`msgpack/msgpack-python`](https://github.com/msgpack/msgpack-python). Files are listed
-with the copyright and license information of both the original MessagePack code and
+with the copyright and license information of both the original Messagepack code and
 the changes. Both projects are licensed under Apache-2.0. See LICENSE.
 
 ## Specification
@@ -246,7 +245,7 @@ IEEE 754 double precision floating point number
 - Implement a pure-Python version of the specification as well as a Cython implementation.
 
 - Benchmarking against small, medium, and large JSON objects as well as individual object
-  types against MessagePack.
+  types against Messagepack.
 
 ## Implementations
 

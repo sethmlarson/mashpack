@@ -28,3 +28,11 @@ class ExtraData(ValueError):
 
     def __str__(self):
         return "unpack(b) received extra data."
+
+
+class PackValueError(ValueError):
+    pass
+
+
+class PackOverflowError(OverflowError, PackValueError):
+    pass

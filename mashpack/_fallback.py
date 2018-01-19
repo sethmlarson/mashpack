@@ -16,7 +16,7 @@
 import struct
 import sys
 import typing
-from mashpack.exceptions import OutOfData, BufferFull
+from mashpack.exceptions import OutOfData, BufferFull, PackValueError
 
 if hasattr(sys, 'pypy_version_info'):
     from __pypy__ import newlist_hint
@@ -757,12 +757,20 @@ class Packer(object):
             elif isinstance(obj, str):
                 data = obj.encode('utf-8')
                 data_len = len(data)
+
+                # Packing STRP
                 if data_len <= 0x3F:
                     return self._buffer.write(_STRUCT_UINT8.pack(0x40 + data_len) + data)
+
+                # Packing STR8
                 elif data_len <= 0xFF:
                     return self._buffer.write(b'\xE5' + _STRUCT_UINT8.pack(data_len) + data)
+
+                # Packing STR16
                 elif data_len <= 0xFFFF:
                     return self._buffer.write(b'\xE6' + _STRUCT_UINT16.pack(data_len) + data)
+
+                # Packing STR32
                 elif data_len <= 0xFFFFFFFF:
                     return self._buffer.write(b'\xE7' + _STRUCT_UINT32.pack(data_len) + data)
                 else:
@@ -776,9 +784,17 @@ class Packer(object):
 
             # Packing BIN*
             elif isinstance(obj, (bytes, bytearray)):
-                pass  # TODO: BIN*
+                n = len(obj)
+                if n >= 2**32:
+                    raise PackValueError(f'{type(obj).__name__} is too large')
+                self._pack_bin_header(n)
+                return self._buffer.write(obj)
             elif isinstance(obj, memoryview):
-                pass  # TODO: BIN*
+                n = len(obj) * obj.itemsize
+                if n >= 2**32:
+                    raise PackValueError('memoryview is too large')
+                self._pack_bin_header(n)
+                return self._buffer.write(obj)
 
             # TODO EXT*
 
@@ -789,22 +805,38 @@ class Packer(object):
             raise TypeError(f'Cannot serialize {obj!r}')
 
     def _pack_array_header(self, n):
+        # Packing MARRAYP
         if 0 < n <= 0x1F:
             return self._buffer.write(_STRUCT_UINT8.pack(0x80 + n))
+
+        # Packing MARRAY8
         elif n <= 0xFF:
             return self._buffer.write(b'\xEB' + _STRUCT_UINT8.pack(n))
+
+        # Packing MARRAY16
         elif n <= 0xFFFF:
             return self._buffer.write(b'\xEC' + _STRUCT_UINT16.pack(n))
+
+        # Packing MARRAY32
         elif n <= 0xFFFFFFFF:
             return self._buffer.write(b'\xED' + _STRUCT_UINT32.pack(n))
+        else:
+            raise PackValueError('array too large')
 
     def _pack_map_header(self, n):
+        # Packing MAPP
         if 0 <= n <= 0x3F:
             return self._buffer.write(_STRUCT_UINT8.pack(n))
+
+        # Packing MAP8
         elif n <= 0xFF:
             return self._buffer.write(b'\xE2' + _STRUCT_UINT8.pack(n))
+
+        # Packing MAP16
         elif n <= 0xFFFF:
             return self._buffer.write(b'\xE3' + _STRUCT_UINT16.pack(n))
+
+        # Packing MAP32
         elif n <= 0xFFFFFFFF:
             return self._buffer.write(b'\xE4' + _STRUCT_UINT32.pack(n))
         else:
@@ -816,3 +848,13 @@ class Packer(object):
         for k, v in pairs:
             self._pack(k, pair_nest_limit)
             self._pack(v, pair_nest_limit)
+
+    def _pack_bin_header(self, n):
+        if n <= 0xFF:
+            return self._buffer.write(b'\xEE' + _STRUCT_UINT8.pack(n))
+        elif n <= 0xFFFF:
+            return self._buffer.write(b'\xEF' + _STRUCT_UINT16.pack(n))
+        elif n <= 0xFFFFFFFF:
+            return self._buffer.write(b'\xF0' + _STRUCT_UINT32.pack(n))
+        else:
+            raise PackValueError('binary too large')

@@ -7,8 +7,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 ### Added
 
-- Add the `mashpack.ARRAY()` hint for `mashpack.Packer` to use `ARRAY*`
-  without doing expensive type-checking.
 - Add the Python implementation of `mashpack.Packer`.
 - Add the Python implementation of `mashpack.Unpacker`.
 - Add the `ARRAY8`, `ARRAY16`, `ARRAY32` data types for typed arrays to save

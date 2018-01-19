@@ -12,27 +12,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from ._fallback import Packer, Unpacker, unpack, unpackb
-
-__all__ = [
-    'Packer', 'Unpacker',
-    'pack', 'packb', 'unpack', 'unpackb',
-    'dump', 'dumps', 'load', 'loads'
-]
+import os
+import re
+from setuptools import setup, find_packages
 
 
-def pack(o, stream, **kwargs):
-    packer = Packer(**kwargs)
-    stream.write(packer.pack(o))
+path = os.path.join(os.path.dirname(__file__), 'mashpack', '__about__.py')
+with open(path) as f:
+    m = re.search('__version__\s+=\s+\'([^\']+)\'', f.read())
+    version = m.group(1)
 
 
-def packb(o, **kwargs) -> bytes:
-    packer = Packer(**kwargs)
-    return packer.pack(o)
-
-
-# Compatibility with marshal/pickle
-load = unpack
-loads = unpackb
-dump = pack
-dumps = packb
+setup(
+    name='mashpack',
+    version=version,
+    packages=find_packages(
+        '.', exclude=['tests', 'benchmarks']
+    )
+)
