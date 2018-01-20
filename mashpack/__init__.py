@@ -12,13 +12,27 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from ._fallback import Packer, Unpacker, unpack, unpackb
+from collections import namedtuple
 
 __all__ = [
-    'Packer', 'Unpacker',
+    'Packer', 'Unpacker', 'ExtType',
     'pack', 'packb', 'unpack', 'unpackb',
     'dump', 'dumps', 'load', 'loads'
 ]
+
+
+class ExtType(namedtuple('ExtType', ['code', 'data'])):
+    def __new__(cls, code, data):
+        if not isinstance(code, int):
+            raise TypeError('code must be int')
+        if not isinstance(data, bytes):
+            raise TypeError('data must be bytes')
+        if not 0 <= code <= 0x7F:
+            raise ValueError('code must be 0 to 127')
+        return super(ExtType, cls).__new__(cls, code, data)
+
+
+from ._fallback import Packer, Unpacker, unpack, unpackb
 
 
 def pack(o, stream, **kwargs):

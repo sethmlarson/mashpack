@@ -106,7 +106,29 @@ the changes. Both projects are licensed under Apache-2.0. See LICENSE.
 ### Map Family (`MAPP`, `MAP8`, `MAP16`, `MAP32`)
 
 ```
+MAPP stores a mapping of up to 63 key-value pairs
++--------+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~+
+|00XXXXXX| N*2 Mashpack-encoded objects |
++--------+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~+
+where XXXXXX is a 6-bit unsigned integer
 
+MAP8 stores a mapping of up to 255 key-value pairs
++--------+--------+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~+
+|  0xC2  |XXXXXXXX| N*2 Mashpack-encoded objects |
++--------+--------+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~+
+where XXXXXXXX is a 8-bit unsigned integer
+
+MAP16 stores a mapping of up to 65,535 key-value pairs
++--------+----------------+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~+
+|  0xC3  |XXXXXXXXXXXXXXXX| N*2 Mashpack-encoded objects |
++--------+----------------+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~+
+where XXXXXXXX_XXXXXXXX is a 16-bit unsigned integer
+
+MAP32 stores a mapping of up to 4,294,967,295 key-value pairs
++--------+--------------------------------+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~+
+|  0xC3  |XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX| N*2 Mashpack-encoded objects |
++--------+--------------------------------+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~+
+where XXXXXXXX_XXXXXXXX_XXXXXXXX_XXXXXXXX is a 32-bit unsigned integer
 ```
 
 ### String Family (`STRP`, `STR8`, `STR16`, `STR32`)
@@ -137,9 +159,37 @@ STR32 stores a UTF-8 encoded string up to 4,294,967,295 bytes
 where XXXXXX_XXXXXXXX_XXXXXX_XXXXXXXX is a 32-bit unsigned integer
 ```
 
-### Array Family (`ARRAY8`, `ARRAY16`, `ARRAY32`, `MARRAYP`, `MARRAY8`, `MARRAY16`, `MARRAY32`)
+### Mixed Array Family (`MARRAYP`, `MARRAY8`, `MARRAY16`, `MARRAY32`)
 
-`TODO`
+```
+MARRAYP stores a mapping of up to 63 elements
++--------+~~~~~~~~~~~~~~~~~~~~~~~~~~~~+
+|100XXXXX| N Mashpack-encoded objects |
++--------+~~~~~~~~~~~~~~~~~~~~~~~~~~~~+
+where XXXXX is a 5-bit unsigned integer
+
+MARRAY8 stores a mapping of up to 255 elements
++--------+--------+~~~~~~~~~~~~~~~~~~~~~~~~~~~~+
+|  0xC2  |XXXXXXXX| N Mashpack-encoded objects |
++--------+--------+~~~~~~~~~~~~~~~~~~~~~~~~~~~~+
+where XXXXXXXX is a 8-bit unsigned integer
+
+MARRAY16 stores a mapping of up to 65,535 elements
++--------+----------------+~~~~~~~~~~~~~~~~~~~~~~~~~~~~+
+|  0xC3  |XXXXXXXXXXXXXXXX| N Mashpack-encoded objects |
++--------+----------------+~~~~~~~~~~~~~~~~~~~~~~~~~~~~+
+where XXXXXXXX_XXXXXXXX is a 16-bit unsigned integer
+
+MARRAY32 stores a mapping of up to 4,294,967,295 elements
++--------+--------------------------------+~~~~~~~~~~~~~~~~~~~~~~~~~~~~+
+|  0xC3  |XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX| N Mashpack-encoded objects |
++--------+--------------------------------+~~~~~~~~~~~~~~~~~~~~~~~~~~~~+
+where XXXXXXXX_XXXXXXXX_XXXXXXXX_XXXXXXXX is a 32-bit unsigned integer
+```
+
+### Typed Array Family (`ARRAY8`, `ARRAY16`, `ARRAY32`)
+
+
 
 ### Binary Family (`BIN8`, `BIN16`, `BIN32`)
 
@@ -284,14 +334,14 @@ IEEE 754 double precision floating point number
   when space would be saved by this operation. Storage will be saved when there is more
   than one `*8` element and will be done if there are more than 3.
 
-- Implement a pure-Python version of the specification as well as a Cython implementation.
+- Create a Cython implementation of the specification.
 
 - Benchmarking against small, medium, and large JSON objects as well as individual object
   types against Messagepack.
 
 ## Implementations
 
-- [Python](https://github.com/SethMichaelLarson/mashpack) (WIP)
+- [Python](https://github.com/SethMichaelLarson/mashpack)
 
 ## License
 

@@ -1,3 +1,24 @@
+import pytest
+from mashpack import ExtType
+
+
 def test_unpack_nested_maps(unpacker):
     unpacker.feed(b'\x01\x41a\x01\x41b\x01\x41c\x00')
     assert unpacker.unpack() == {'a': {'b': {'c': {}}}}
+
+
+
+@pytest.mark.parametrize('obj', [
+    ExtType(code=21, data=b'\x95|1\x84+\x0fL\xb4\xf1\x19\xc6\xb4\xd1\x1aK\xee\xad4#\x86\xbc&Lt\x17.3\x00\xb5Sh\xe5\x08!\x92\xf6\xd1c{3+,d\x1c\xf9\xa9\x8e7\xd3\x18\xab\xa5k\xc2Eo?\x08"#Y\xca!(\xc93+u\xcai\x1e\\Xp\x00\xac20m\xaa\x11\xa7U\x1e,{\r\x834z\xb0FCV\x8e\xe3\xdb\x82#\x15\x0b\xbc30%M}\x0fc\x00\xf5nRr\xee\\\xc8&O44\xc8\x90{!\xfc\xf4\x83\x19x\x13\xdfI\xa3Xy5m\xb53X\xb7Q\x9e\xe7\xbd;\xfao\xe5f\xad\xed\xf0qBz\x05?2=\x1b\r\x88b\xd2\x13\xd5\xb0\x87l\x02`\xff\xcd'),
+    {'\n&ģ\U00076c95ª\x86\U000dfa23/6\x9b\n\U00013aed\x16\n#臷4U\U00068b2e\n,꽴𣫤\U000e2cda\U000e94bd\U0005a5de©\U0008540dÒ³\n\U000bdcbai\n\U000983a1妒\U00010b37\x0b\x05ã\x0e¿#\U00098824\U000b0b0e\n\x01ú\U000b116a\U0008e1fa)\n\U000a4e2d\U000b62e3\U000b84d8\U00076731': [[]]},
+    {'\n&ģ\U00076c95ª\x86\U000dfa23/6\x9b\n\U00013aed\x16\n#臷4U\U00068b2e\n,꽴𣫤\U000e2cda\U000e94bd\U0005a5de©\U0008540dÒ³\n\U000bdcbai\n\U000983a1妒\U00010b37\x0b\x05ã\x0e¿#\U00098824\U000b0b0e\n\x01ú\U000b116a\U0008e1fa)\n\U000a4e2d\U000b62e3\U000b84d8\U00076731': [[]],
+     "Q'\n\U00066382ϭ\U000af2bfv\U000cb523*\x13\U00107257\U00088683\U0010a5e8": ExtType(code=21, data=b'\x95|1\x84+\x0fL\xb4\xf1\x19\xc6\xb4\xd1\x1aK\xee\xad4#\x86\xbc&Lt\x17.3\x00\xb5Sh\xe5\x08!\x92\xf6\xd1c{3+,d\x1c\xf9\xa9\x8e7\xd3\x18\xab\xa5k\xc2Eo?\x08"#Y\xca!(\xc93+u\xcai\x1e\\Xp\x00\xac20m\xaa\x11\xa7U\x1e,{\r\x834z\xb0FCV\x8e\xe3\xdb\x82#\x15\x0b\xbc30%M}\x0fc\x00\xf5nRr\xee\\\xc8&O44\xc8\x90{!\xfc\xf4\x83\x19x\x13\xdfI\xa3Xy5m\xb53X\xb7Q\x9e\xe7\xbd;\xfao\xe5f\xad\xed\xf0qBz\x05?2=\x1b\r\x88b\xd2\x13\xd5\xb0\x87l\x02`\xff\xcd'),
+     'U \n\U000b38dd𐠰': [],
+     'Ŧ➒iB\u1739p휛ŀ\n\n/㾄\x0c\U000e0a02쥣\x1cﺺȫ\x0e$;6鸺\x08!뒀蓈K簜:\U000690ef\x1b\U000bee1b\x15랞\x1b㱜\n\nÙ\n Jµ$\n': True},
+    {'\n&ģ\U00076c95ª\x866\x9b\n\U00011927\U00011927\U00011927': [], '𐠰': []},
+    {'0': ExtType(code=0, data=b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\...aW\\\xecY\x117.\tD\xa4\xbbW\xfa\xf2\x01\x8e\xba\xda\x9b\x12S\xb8\xe1c\xd3\x17d\xff\xd9\xf8`\x04\xbe\xfe=sV]\xd3S\x16')}
+])
+def test_pack_and_unpack_large_objects(obj, packer, unpacker):
+    data = packer.pack(obj)
+    unpacker.feed(data)
+    assert unpacker.unpack() == obj

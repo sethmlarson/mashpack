@@ -16,7 +16,8 @@
 import struct
 import sys
 import typing
-from mashpack.exceptions import OutOfData, BufferFull, PackValueError
+from mashpack.exceptions import OutOfData, BufferFull, PackValueError, ExtraData
+from mashpack import ExtType
 
 if hasattr(sys, 'pypy_version_info'):
     from __pypy__ import newlist_hint
@@ -97,11 +98,9 @@ def unpackb(data, **kwargs):
     unpacker = Unpacker(None, **kwargs)
     unpacker.feed(data)
     ret = unpacker._unpack(_CMD_CONSTRUCT)
+    if unpacker._got_extra_data():
+        raise ExtraData(ret, unpacker._get_extra_data())
     return ret
-
-
-class ARRAY(list):
-    pass
 
 
 class Unpacker(object):
@@ -110,7 +109,7 @@ class Unpacker(object):
                  object_hook=None,
                  object_pairs_hook=None,
                  list_hook=None,
-                 ext_hook=None,
+                 ext_hook=ExtType,
                  max_buffer_size=_DEFAULT_MAX_LEN,
                  max_str_len=_DEFAULT_MAX_LEN,
                  max_bin_len=_DEFAULT_MAX_LEN,
@@ -191,9 +190,8 @@ class Unpacker(object):
     def _read(self, n):
         self._reserve(n)
         i = self._buffer_i
-        n += i
-        self._buffer_i = n
-        return self._buffer[i:n]
+        self._buffer_i = i + n
+        return self._buffer[i:self._buffer_i]
 
     def _reserve(self, n):
         remain_bytes = len(self._buffer) - self._buffer_i - n
@@ -571,6 +569,7 @@ class Unpacker(object):
                 if l > self._max_ext_len:
                     raise ValueError(f'{n} exceeds max_ext_len={self._max_ext_len}')
                 obj = self._read(l)
+                obj_type = _TYPE_EXT
 
             # EXT16
             elif b == 0xDC:
@@ -580,6 +579,7 @@ class Unpacker(object):
                 if l > self._max_ext_len:
                     raise ValueError(f'{n} exceeds max_ext_len={self._max_ext_len}')
                 obj = self._read(l)
+                obj_type = _TYPE_EXT
 
             # EXT32
             elif b == 0xDD:
@@ -589,6 +589,7 @@ class Unpacker(object):
                 if l > self._max_ext_len:
                     raise ValueError(f'{n} exceeds max_ext_len={self._max_ext_len}')
                 obj = self._read(l)
+                obj_type = _TYPE_EXT
 
             # RESERVED
             elif b == 0xDE:
@@ -739,15 +740,15 @@ class Packer(object):
                     return self._buffer.write(b'\xD1' + _STRUCT_INT8.pack(obj))
 
                 # Packing INT16
-                elif obj >= -0x80:
+                elif obj >= -0x8000:
                     return self._buffer.write(b'\xD2' + _STRUCT_INT16.pack(obj))
 
                 # Packing INT32
-                elif obj >= -0x80:
+                elif obj >= -0x80000000:
                     return self._buffer.write(b'\xD3' + _STRUCT_INT32.pack(obj))
 
                 # Packing INT64
-                elif obj >= -0x80:
+                elif obj >= -0x8000000000000000:
                     return self._buffer.write(b'\xD4' + _STRUCT_INT64.pack(obj))
 
                 else:
@@ -796,7 +797,23 @@ class Packer(object):
                 self._pack_bin_header(n)
                 return self._buffer.write(obj)
 
-            # TODO EXT*
+            # Packing EXT*
+            elif isinstance(obj, ExtType):
+                data_len = len(obj.data)
+
+                # Packing EXT8
+                if data_len <= 0xFF:
+                    return self._buffer.write(b'\xDB' + _STRUCT_EXT8.pack(data_len, obj.code) + obj.data)
+
+                # Packing EXT16
+                elif data_len <= 0xFFFF:
+                    return self._buffer.write(b'\xDC' + _STRUCT_EXT16.pack(data_len, obj.code) + obj.data)
+
+                # Packing EXT32
+                elif data_len <= 0xFFFFFFFF:
+                    return self._buffer.write(b'\xDD' + _STRUCT_EXT32.pack(data_len, obj.code) + obj.data)
+                else:
+                    raise PackValueError('ext is too large')
 
             elif not default_used and self._default is not None:
                 obj = self._default(obj)
