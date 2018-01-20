@@ -28,18 +28,18 @@ def packer_type():
 
 
 @pytest.fixture(scope='session')
-def packer_type():
+def unpacker_type():
     if os.environ.get('TEST_WITH_CYTHON') == 'true':
         raise NotImplementedError()
     else:
         return PythonUnpacker
 
 
-@pytest.fixture(scope='test')
+@pytest.fixture(scope='function')
 def unpacker(unpacker_type):
     return unpacker_type()
 
 
-@pytest.fixture(scope='test')
+@pytest.fixture(scope='function')
 def packer(packer_type):
     return packer_type()

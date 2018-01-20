@@ -69,39 +69,39 @@ the changes. Both projects are licensed under Apache-2.0. See LICENSE.
 | STRP      | `01xxxxxx` | `0x40-0x7F` |
 | MARRAYP   | `100xxxxx` | `0x80-0x9F` |
 | INTP      | `101xxxxx` | `0xA0-0xBF` |
-| NINTP     | `110xxxxx` | `0xC0-0xDF` |
-| FALSE     | `11100000` | `0xE0`      |
-| TRUE      | `11100001` | `0xE1`      |
-| MAP8      | `11100010` | `0xE2`      |
-| MAP16     | `11100011` | `0xE3`      |
-| MAP32     | `11100100` | `0xE4`      |
-| STR8      | `11100101` | `0xE5`      |
-| STR16     | `11100110` | `0xE6`      |
-| STR32     | `11100111` | `0xE7`      |
-| ARRAY8    | `11101000` | `0xE8`      |
-| ARRAY16   | `11101001` | `0xE9`      |
-| ARRAY32   | `11101010` | `0xEA`      |
-| MARRAY8   | `11101011` | `0xEB`      |
-| MARRAY16  | `11101100` | `0xEC`      |
-| MARRAY32  | `11101101` | `0xED`      |
-| BIN8      | `11101110` | `0xEE`      |
-| BIN16     | `11101111` | `0xEF`      |
-| BIN32     | `11110000` | `0xF0`      |
-| INT8      | `11110001` | `0xF1`      |
-| INT16     | `11110010` | `0xF2`      |
-| INT32     | `11110011` | `0xF3`      |
-| INT64     | `11110100` | `0xF4`      |
-| UINT8     | `11110101` | `0xF5`      |
-| UINT16    | `11110110` | `0xF6`      |
-| UINT32    | `11110111` | `0xF7`      |
-| UINT64    | `11111000` | `0xF8`      |
-| FLOAT32   | `11111001` | `0xF9`      |
-| FLOAT64   | `11111010` | `0xFA`      |
-| EXT8      | `11111011` | `0xFB`      |
-| EXT16     | `11111100` | `0xFC`      |
-| EXT32     | `11111101` | `0xFD`      |
-| RESERVED  | `11111110` | `0xFE`      |
-| NULL      | `11111111` | `0xFF`      |
+| NINTP     | `111xxxxx` | `0xE0-0xFF` |
+| FALSE     | `11000000` | `0xC0`      |
+| TRUE      | `11000001` | `0xC1`      |
+| MAP8      | `11000010` | `0xC2`      |
+| MAP16     | `11000011` | `0xC3`      |
+| MAP32     | `11000100` | `0xC4`      |
+| STR8      | `11000101` | `0xC5`      |
+| STR16     | `11000110` | `0xC6`      |
+| STR32     | `11000111` | `0xC7`      |
+| ARRAY8    | `11001000` | `0xC8`      |
+| ARRAY16   | `11001001` | `0xC9`      |
+| ARRAY32   | `11001010` | `0xCA`      |
+| MARRAY8   | `11001011` | `0xCB`      |
+| MARRAY16  | `11001100` | `0xCC`      |
+| MARRAY32  | `11001101` | `0xCD`      |
+| BIN8      | `11001110` | `0xCE`      |
+| BIN16     | `11001111` | `0xCF`      |
+| BIN32     | `11010000` | `0xD0`      |
+| INT8      | `11010001` | `0xD1`      |
+| INT16     | `11010010` | `0xD2`      |
+| INT32     | `11010011` | `0xD3`      |
+| INT64     | `11010100` | `0xD4`      |
+| UINT8     | `11010101` | `0xD5`      |
+| UINT16    | `11010110` | `0xD6`      |
+| UINT32    | `11010111` | `0xD7`      |
+| UINT64    | `11011000` | `0xD8`      |
+| FLOAT32   | `11011001` | `0xD9`      |
+| FLOAT64   | `11011010` | `0xDA`      |
+| EXT8      | `11011011` | `0xDB`      |
+| EXT16     | `11011100` | `0xDC`      |
+| EXT32     | `11011101` | `0xDD`      |
+| RESERVED  | `11011110` | `0xDE`      |
+| NULL      | `11011111` | `0xDF`      |
 
 ### Map Family (`MAPP`, `MAP8`, `MAP16`, `MAP32`)
 
@@ -111,7 +111,31 @@ the changes. Both projects are licensed under Apache-2.0. See LICENSE.
 
 ### String Family (`STRP`, `STR8`, `STR16`, `STR32`)
 
-`TODO`
+```
+STRP stores a UTF-8 encoded string up to 63 bytes
++--------+======================+
+|01XXXXXX| UTF-8 encoded string |
++--------+======================+
+where XXXXXX is a 6-bit unsigned integer
+
+STR8 stores a UTF-8 encoded string up to 255 bytes
++--------+--------+======================+
+|  0xC5  |XXXXXXXX| UTF-8 encoded string |
++--------+--------+======================+
+where XXXXXX is a 8-bit unsigned integer
+
+STR16 stores a UTF-8 encoded string up to 65,535 bytes
++--------+----------------+======================+
+|  0xC6  |XXXXXXXXXXXXXXXX| UTF-8 encoded string |
++--------+----------------+======================+
+where XXXXXX_XXXXXXXX is a 16-bit unsigned integer
+
+STR32 stores a UTF-8 encoded string up to 4,294,967,295 bytes
++--------+--------------------------------+======================+
+|  0xC7  |XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX| UTF-8 encoded string |
++--------+--------------------------------+======================+
+where XXXXXX_XXXXXXXX_XXXXXX_XXXXXXXX is a 32-bit unsigned integer
+```
 
 ### Array Family (`ARRAY8`, `ARRAY16`, `ARRAY32`, `MARRAYP`, `MARRAY8`, `MARRAY16`, `MARRAY32`)
 
@@ -119,7 +143,25 @@ the changes. Both projects are licensed under Apache-2.0. See LICENSE.
 
 ### Binary Family (`BIN8`, `BIN16`, `BIN32`)
 
-`TODO`
+```
+BIN8 stores a byte string up to 255 bytes
++--------+--------+=======+
+|  0xCE  |XXXXXXXX| bytes |
++--------+--------+=======+
+where XXXXXX is a 8-bit unsigned integer
+
+BIN16 stores a byte string up to 65,535 bytes
++--------+----------------+=======+
+|  0xCF  |XXXXXXXXXXXXXXXX| bytes |
++--------+----------------+=======+
+where XXXXXX_XXXXXXXX is a 16-bit unsigned integer
+
+BIN32 stores a byte string up to 4,294,967,295 bytes
++--------+--------------------------------+=======+
+|  0xD0  |XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX| bytes |
++--------+--------------------------------+=======+
+where XXXXXX_XXXXXXXX_XXXXXX_XXXXXXXX is a 32-bit unsigned integer
+```
 
 ### Integer Family (`INTP`, `NINTP`, `UINT8`, `UINT16`, `UINT32`, `UINT64`, `INT8`, `INT16`, `INT32`, `INT64`)
 
@@ -134,57 +176,57 @@ where XXXXX is a 5-bit unsigned integer
 
 NINTP stores 5-bit negative integer
 +--------+
-|110YYYYY|
+|111YYYYY|
 +--------+
 where YYYYY is a 5-bit unsigned integer
 
 
 INT8 stores 8-bit signed integer
 +--------+--------+
-|  0xF1  |XXXXXXXX|
+|  0xD1  |XXXXXXXX|
 +--------+--------+
 where XXXXXXXX is an 8-bit signed integer
 
 INT16 stores 16-bit signed integer
 +--------+--------+--------+
-|  0xF2  |XXXXXXXX|XXXXXXXX|
+|  0xD2  |XXXXXXXX|XXXXXXXX|
 +--------+--------+--------+
 where XXXXXXXX_XXXXXXXX is an 16-bit unsigned integer
 
 INT32 stores 32-bit signed integer
 +--------+--------+--------+--------+--------+
-|  0xF3  |XXXXXXXX|XXXXXXXX|XXXXXXXX|XXXXXXXX|
+|  0xD3  |XXXXXXXX|XXXXXXXX|XXXXXXXX|XXXXXXXX|
 +--------+--------+--------+--------+--------+
 where XXXXXXXX_XXXXXXXX_XXXXXXXX_XXXXXXXX is an 32-bit signed integer
 
 INT64 stores 64-bit signed integer
 +--------+--------+--------+--------+--------+--------+--------+--------+--------+
-|  0xF4  |XXXXXXXX|XXXXXXXX|XXXXXXXX|XXXXXXXX|XXXXXXXX|XXXXXXXX|XXXXXXXX|XXXXXXXX|
+|  0xD4  |XXXXXXXX|XXXXXXXX|XXXXXXXX|XXXXXXXX|XXXXXXXX|XXXXXXXX|XXXXXXXX|XXXXXXXX|
 +--------+--------+--------+--------+--------+--------+--------+--------+--------+
 where XXXXXXXX_XXXXXXXX_XXXXXXXX_XXXXXXXX_XXXXXXXX_XXXXXXXX_XXXXXXXX_XXXXXXXX is an 64-bit signed integer
 
 
 UINT8 stores 8-bit unsigned integer
 +--------+--------+
-|  0xF1  |XXXXXXXX|
+|  0xD1  |XXXXXXXX|
 +--------+--------+
 where XXXXXXXX is an 8-bit unsigned integer
 
 UINT16 stores 16-bit unsigned integer
 +--------+--------+--------+
-|  0xF2  |XXXXXXXX|XXXXXXXX|
+|  0xD2  |XXXXXXXX|XXXXXXXX|
 +--------+--------+--------+
 where XXXXXXXX_XXXXXXXX is an 16-bit unsigned integer
 
 UINT32 stores 32-bit unsigned integer
 +--------+--------+--------+--------+--------+
-|  0xF3  |XXXXXXXX|XXXXXXXX|XXXXXXXX|XXXXXXXX|
+|  0xD3  |XXXXXXXX|XXXXXXXX|XXXXXXXX|XXXXXXXX|
 +--------+--------+--------+--------+--------+
 where XXXXXXXX_XXXXXXXX_XXXXXXXX_XXXXXXXX is an 32-bit unsigned integer
 
 UINT64 stores 64-bit unsigned integer
 +--------+--------+--------+--------+--------+--------+--------+--------+--------+
-|  0xF4  |XXXXXXXX|XXXXXXXX|XXXXXXXX|XXXXXXXX|XXXXXXXX|XXXXXXXX|XXXXXXXX|XXXXXXXX|
+|  0xD4  |XXXXXXXX|XXXXXXXX|XXXXXXXX|XXXXXXXX|XXXXXXXX|XXXXXXXX|XXXXXXXX|XXXXXXXX|
 +--------+--------+--------+--------+--------+--------+--------+--------+--------+
 where XXXXXXXX_XXXXXXXX_XXXXXXXX_XXXXXXXX_XXXXXXXX_XXXXXXXX_XXXXXXXX_XXXXXXXX is an 64-bit unsigned integer
 ```
@@ -196,12 +238,12 @@ where XXXXXXXX_XXXXXXXX_XXXXXXXX_XXXXXXXX_XXXXXXXX_XXXXXXXX_XXXXXXXX_XXXXXXXX is
 ```
 false:
 +--------+
-|  0xE0  |
+|  0xC0  |
 +--------+
 
 true:
 +--------+
-|  0xE1  |
+|  0xC1  |
 +--------+
 ```
 
@@ -210,13 +252,13 @@ true:
 ```
 FLOAT32 stores IEEE 754 single precision floating point number.
 +--------+--------+--------+--------+--------+
-|  0xF9  |XXXXXXXX|XXXXXXXX|XXXXXXXX|XXXXXXXX|
+|  0xD9  |XXXXXXXX|XXXXXXXX|XXXXXXXX|XXXXXXXX|
 +--------+--------+--------+--------+--------+
 where XXXXXXXX_XXXXXXXX_XXXXXXXX_XXXXXXXX is a big-endian IEEE 754 single precision float point number.
 
 FLOAT64 stores IEEE 754 double precision floating point number.
 +--------+--------+--------+--------+--------+--------+--------+--------+--------+
-|  0xFA  |XXXXXXXX|XXXXXXXX|XXXXXXXX|XXXXXXXX|XXXXXXXX|XXXXXXXX|XXXXXXXX|XXXXXXXX|
+|  0xDA  |XXXXXXXX|XXXXXXXX|XXXXXXXX|XXXXXXXX|XXXXXXXX|XXXXXXXX|XXXXXXXX|XXXXXXXX|
 +--------+--------+--------+--------+--------+--------+--------+--------+--------+
 where XXXXXXXX_XXXXXXXX_XXXXXXXX_XXXXXXXX_XXXXXXXX_XXXXXXXX_XXXXXXXX_XXXXXXXX is a big-endian
 IEEE 754 double precision floating point number
@@ -232,7 +274,7 @@ IEEE 754 double precision floating point number
 
 ```
 +--------+
-|  0xFF  |
+|  0xDF  |
 +--------+
 ```
 

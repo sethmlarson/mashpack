@@ -191,7 +191,7 @@ class Unpacker(object):
     def _read(self, n):
         self._reserve(n)
         i = self._buffer_i
-        i += n
+        n += i
         self._buffer_i = n
         return self._buffer[i:n]
 
@@ -351,19 +351,19 @@ class Unpacker(object):
                 obj = b & 0x1F
 
             # NINTP
-            elif second_prefix == 0xB0:
-                obj = -(b & 0x1F) - 1
+            elif second_prefix == 0xE0:
+                obj = b - 256
 
             # FALSE
-            elif b == 0xE0:
+            elif b == 0xC0:
                 obj = False
 
             # TRUE
-            elif b == 0xE1:
+            elif b == 0xC1:
                 obj = True
 
             # MAP8
-            elif b == 0xE2:
+            elif b == 0xC2:
                 self._reserve(1)
                 n = self._buffer[self._buffer_i]
                 self._buffer_i += 1
@@ -372,7 +372,7 @@ class Unpacker(object):
                 obj_type = _TYPE_MAP
 
             # MAP16
-            elif b == 0xE3:
+            elif b == 0xC3:
                 self._reserve(2)
                 n, = _STRUCT_UINT16.unpack_from(self._buffer, self._buffer_i)
                 self._buffer_i += 2
@@ -381,7 +381,7 @@ class Unpacker(object):
                 obj_type = _TYPE_MAP
 
             # MAP32
-            elif b == 0xE4:
+            elif b == 0xC4:
                 self._reserve(4)
                 n, = _STRUCT_UINT32.unpack_from(self._buffer, self._buffer_i)
                 self._buffer_i += 4
@@ -390,7 +390,7 @@ class Unpacker(object):
                 obj_type = _TYPE_MAP
 
             # STR8
-            elif b == 0xE5:
+            elif b == 0xC5:
                 self._reserve(1)
                 n = self._buffer[self._buffer_i]
                 self._buffer_i += 1
@@ -400,7 +400,7 @@ class Unpacker(object):
                 obj_type = _TYPE_STR
 
             # STR16
-            elif b == 0xE6:
+            elif b == 0xC6:
                 self._reserve(2)
                 n, = _STRUCT_UINT16.unpack_from(self._buffer, self._buffer_i)
                 self._buffer_i += 2
@@ -410,7 +410,7 @@ class Unpacker(object):
                 obj_type = _TYPE_STR
 
             # STR32
-            elif b == 0xE7:
+            elif b == 0xC7:
                 self._reserve(4)
                 n, = _STRUCT_UINT32.unpack_from(self._buffer, self._buffer_i)
                 self._buffer_i += 4
@@ -420,7 +420,7 @@ class Unpacker(object):
                 obj_type = _TYPE_STR
 
             # ARRAY8
-            elif b == 0xE8:
+            elif b == 0xC8:
                 self._reserve(2)
                 n, obj_dt = _STRUCT_ARRAY8.unpack_from(self._buffer, self._buffer_i)
                 self._buffer_i += 2
@@ -429,7 +429,7 @@ class Unpacker(object):
                 obj_type = _TYPE_ARRAY
 
             # ARRAY16
-            elif b == 0xE9:
+            elif b == 0xC9:
                 self._reserve(3)
                 n, obj_dt = _STRUCT_ARRAY16.unpack_from(self._buffer, self._buffer_i)
                 self._buffer_i += 3
@@ -438,7 +438,7 @@ class Unpacker(object):
                 obj_type = _TYPE_ARRAY
 
             # ARRAY32
-            elif b == 0xEA:
+            elif b == 0xCA:
                 self._reserve(5)
                 n, obj_dt = _STRUCT_ARRAY32.unpack_from(self._buffer, self._buffer_i)
                 self._buffer_i += 5
@@ -447,7 +447,7 @@ class Unpacker(object):
                 obj_type = _TYPE_ARRAY
 
             # MARRAY8
-            elif b == 0xEB:
+            elif b == 0xCB:
                 self._reserve(1)
                 n = self._buffer[self._buffer_i]
                 self._buffer_i += 1
@@ -456,7 +456,7 @@ class Unpacker(object):
                 obj_type = _TYPE_MARRAY
 
             # MARRAY16
-            elif b == 0xEC:
+            elif b == 0xCC:
                 self._reserve(2)
                 n, = _STRUCT_UINT16.unpack_from(self._buffer, self._buffer_i)
                 self._buffer_i += 2
@@ -465,7 +465,7 @@ class Unpacker(object):
                 obj_type = _TYPE_MARRAY
 
             # MARRAY32
-            elif b == 0xED:
+            elif b == 0xCD:
                 self._reserve(4)
                 n, = _STRUCT_UINT32.unpack_from(self._buffer, self._buffer_i)
                 self._buffer_i += 4
@@ -474,7 +474,7 @@ class Unpacker(object):
                 obj_type = _TYPE_MARRAY
 
             # BIN8
-            elif b == 0xEE:
+            elif b == 0xCE:
                 self._reserve(1)
                 n = self._buffer[self._buffer_i]
                 self._buffer_i += 1
@@ -484,7 +484,7 @@ class Unpacker(object):
                 obj_type = _TYPE_BIN
 
             # BIN16
-            elif b == 0xEF:
+            elif b == 0xCF:
                 self._reserve(2)
                 n, = _STRUCT_UINT16.unpack_from(self._buffer, self._buffer_i)
                 self._buffer_i += 2
@@ -494,7 +494,7 @@ class Unpacker(object):
                 obj_type = _TYPE_BIN
 
             # BIN32
-            elif b == 0xF0:
+            elif b == 0xD0:
                 self._reserve(4)
                 n, = _STRUCT_UINT32.unpack_from(self._buffer, self._buffer_i)
                 self._buffer_i += 4
@@ -504,67 +504,67 @@ class Unpacker(object):
                 obj_type = _TYPE_BIN
 
             # INT8
-            elif b == 0xF1:
+            elif b == 0xD1:
                 self._reserve(1)
                 obj, = _STRUCT_INT8.unpack_from(self._buffer, self._buffer_i)
                 self._buffer_i += 1
 
             # INT16
-            elif b == 0xF2:
+            elif b == 0xD2:
                 self._reserve(2)
                 obj, = _STRUCT_INT16.unpack_from(self._buffer, self._buffer_i)
                 self._buffer_i += 2
 
             # INT32
-            elif b == 0xF3:
+            elif b == 0xD3:
                 self._reserve(4)
                 obj, = _STRUCT_INT32.unpack_from(self._buffer, self._buffer_i)
                 self._buffer_i += 4
 
             # INT64
-            elif b == 0xF4:
+            elif b == 0xD4:
                 self._reserve(8)
                 obj, = _STRUCT_INT64.unpack_from(self._buffer, self._buffer_i)
                 self._buffer_i += 8
 
             # UINT8
-            elif b == 0xF5:
+            elif b == 0xD5:
                 self._reserve(1)
                 obj = self._buffer[self._buffer_i]
                 self._buffer_i += 1
 
             # UINT16
-            elif b == 0xF6:
+            elif b == 0xD6:
                 self._reserve(2)
                 obj, = _STRUCT_UINT16.unpack_from(self._buffer, self._buffer_i)
                 self._buffer_i += 2
 
             # UINT32
-            elif b == 0xF7:
+            elif b == 0xD7:
                 self._reserve(4)
                 obj, = _STRUCT_UINT32.unpack_from(self._buffer, self._buffer_i)
                 self._buffer_i += 4
 
             # UINT64
-            elif b == 0xF8:
+            elif b == 0xD8:
                 self._reserve(8)
                 obj, = _STRUCT_UINT64.unpack_from(self._buffer, self._buffer_i)
                 self._buffer_i += 8
 
             # FLOAT32
-            elif b == 0xF9:
+            elif b == 0xD9:
                 self._reserve(4)
                 obj, = _STRUCT_FLOAT32.unpack_from(self._buffer, self._buffer_i)
                 self._buffer_i += 4
 
             # FLOAT64
-            elif b == 0xFA:
+            elif b == 0xDA:
                 self._reserve(8)
                 obj, = _STRUCT_FLOAT64.unpack_from(self._buffer, self._buffer_i)
                 self._buffer_i += 8
 
             # EXT8
-            elif b == 0xFB:
+            elif b == 0xDB:
                 self._reserve(2)
                 l, n = _STRUCT_EXT8.unpack_from(self._buffer, self._buffer_i)
                 self._buffer_i += 2
@@ -573,7 +573,7 @@ class Unpacker(object):
                 obj = self._read(l)
 
             # EXT16
-            elif b == 0xFC:
+            elif b == 0xDC:
                 self._reserve(3)
                 l, n = _STRUCT_EXT16.unpack_from(self._buffer, self._buffer_i)
                 self._buffer_i += 3
@@ -582,7 +582,7 @@ class Unpacker(object):
                 obj = self._read(l)
 
             # EXT32
-            elif b == 0xFD:
+            elif b == 0xDD:
                 self._reserve(5)
                 l, n = _STRUCT_EXT32.unpack_from(self._buffer, self._buffer_i)
                 self._buffer_i += 5
@@ -591,11 +591,11 @@ class Unpacker(object):
                 obj = self._read(l)
 
             # RESERVED
-            elif b == 0xFE:
+            elif b == 0xDE:
                 pass
 
             # NULL
-            elif b == 0xFF:
+            elif b == 0xDF:
                 obj = None
 
         return obj_type, n, obj, obj_dt
@@ -682,15 +682,15 @@ class Packer(object):
 
             # Packing NONE
             if obj is None:
-                return self._buffer.write(b'\xFF')
+                return self._buffer.write(b'\xDF')
 
             # Packing TRUE
             elif obj is True:
-                return self._buffer.write(b'\xE1')
+                return self._buffer.write(b'\xC1')
 
             # Packing FALSE
             elif obj is False:
-                return self._buffer.write(b'\xE0')
+                return self._buffer.write(b'\xC0')
 
             # Packing MAP*
             elif isinstance(obj, dict):
@@ -714,41 +714,41 @@ class Packer(object):
 
                     # Packing UINT8
                     elif obj <= 0xFF:
-                        return self._buffer.write(b'\xF5' + _STRUCT_UINT8.pack(obj))
+                        return self._buffer.write(b'\xD5' + _STRUCT_UINT8.pack(obj))
 
                     # Packing UINT16
                     elif obj <= 0xFFFF:
-                        return self._buffer.write(b'\xF6' + _STRUCT_UINT16.pack(obj))
+                        return self._buffer.write(b'\xD6' + _STRUCT_UINT16.pack(obj))
 
                     # Packing UINT32:
                     elif obj <= 0xFFFFFFFF:
-                        return self._buffer.write(b'\xF7' + _STRUCT_UINT32.pack(obj))
+                        return self._buffer.write(b'\xD7' + _STRUCT_UINT32.pack(obj))
 
                     # Packing UINT64
                     elif obj <= 0xFFFFFFFFFFFFFFFF:
-                        return self._buffer.write(b'\xF8' + _STRUCT_UINT64.pack(obj))
+                        return self._buffer.write(b'\xD8' + _STRUCT_UINT64.pack(obj))
                     else:
                         raise PackValueError('integer out of range')
 
                 # Packing NINTP
                 elif obj >= -0x20:
-                    return self._buffer.write(_STRUCT_UINT8.pack(0xC0 - obj + 1))
+                    return self._buffer.write(_STRUCT_UINT8.pack(256 + obj))
 
                 # Packing INT8
                 elif obj >= -0x80:
-                    return self._buffer.write(b'\xF1' + _STRUCT_INT8.pack(obj))
+                    return self._buffer.write(b'\xD1' + _STRUCT_INT8.pack(obj))
 
                 # Packing INT16
                 elif obj >= -0x80:
-                    return self._buffer.write(b'\xF2' + _STRUCT_INT16.pack(obj))
+                    return self._buffer.write(b'\xD2' + _STRUCT_INT16.pack(obj))
 
                 # Packing INT32
                 elif obj >= -0x80:
-                    return self._buffer.write(b'\xF3' + _STRUCT_INT32.pack(obj))
+                    return self._buffer.write(b'\xD3' + _STRUCT_INT32.pack(obj))
 
                 # Packing INT64
                 elif obj >= -0x80:
-                    return self._buffer.write(b'\xF4' + _STRUCT_INT64.pack(obj))
+                    return self._buffer.write(b'\xD4' + _STRUCT_INT64.pack(obj))
 
                 else:
                     raise PackValueError('integer out of range')
@@ -764,23 +764,23 @@ class Packer(object):
 
                 # Packing STR8
                 elif data_len <= 0xFF:
-                    return self._buffer.write(b'\xE5' + _STRUCT_UINT8.pack(data_len) + data)
+                    return self._buffer.write(b'\xC5' + _STRUCT_UINT8.pack(data_len) + data)
 
                 # Packing STR16
                 elif data_len <= 0xFFFF:
-                    return self._buffer.write(b'\xE6' + _STRUCT_UINT16.pack(data_len) + data)
+                    return self._buffer.write(b'\xC6' + _STRUCT_UINT16.pack(data_len) + data)
 
                 # Packing STR32
                 elif data_len <= 0xFFFFFFFF:
-                    return self._buffer.write(b'\xE7' + _STRUCT_UINT32.pack(data_len) + data)
+                    return self._buffer.write(b'\xC7' + _STRUCT_UINT32.pack(data_len) + data)
                 else:
                     raise PackValueError('string too large')
 
             # Packing FLOAT32 and FLOAT64
             elif isinstance(obj, float):
                 if self._use_float32:
-                    return self._buffer.write(b'\xF9' + _STRUCT_FLOAT32.pack(obj))
-                return self._buffer.write(b'\xFA' + _STRUCT_FLOAT64.pack(obj))
+                    return self._buffer.write(b'\xD9' + _STRUCT_FLOAT32.pack(obj))
+                return self._buffer.write(b'\xDA' + _STRUCT_FLOAT64.pack(obj))
 
             # Packing BIN*
             elif isinstance(obj, (bytes, bytearray)):
@@ -811,15 +811,15 @@ class Packer(object):
 
         # Packing MARRAY8
         elif n <= 0xFF:
-            return self._buffer.write(b'\xEB' + _STRUCT_UINT8.pack(n))
+            return self._buffer.write(b'\xCB' + _STRUCT_UINT8.pack(n))
 
         # Packing MARRAY16
         elif n <= 0xFFFF:
-            return self._buffer.write(b'\xEC' + _STRUCT_UINT16.pack(n))
+            return self._buffer.write(b'\xCC' + _STRUCT_UINT16.pack(n))
 
         # Packing MARRAY32
         elif n <= 0xFFFFFFFF:
-            return self._buffer.write(b'\xED' + _STRUCT_UINT32.pack(n))
+            return self._buffer.write(b'\xCD' + _STRUCT_UINT32.pack(n))
         else:
             raise PackValueError('array too large')
 
@@ -830,15 +830,15 @@ class Packer(object):
 
         # Packing MAP8
         elif n <= 0xFF:
-            return self._buffer.write(b'\xE2' + _STRUCT_UINT8.pack(n))
+            return self._buffer.write(b'\xC2' + _STRUCT_UINT8.pack(n))
 
         # Packing MAP16
         elif n <= 0xFFFF:
-            return self._buffer.write(b'\xE3' + _STRUCT_UINT16.pack(n))
+            return self._buffer.write(b'\xC3' + _STRUCT_UINT16.pack(n))
 
         # Packing MAP32
         elif n <= 0xFFFFFFFF:
-            return self._buffer.write(b'\xE4' + _STRUCT_UINT32.pack(n))
+            return self._buffer.write(b'\xC4' + _STRUCT_UINT32.pack(n))
         else:
             raise PackValueError('map too large')
 
@@ -851,10 +851,10 @@ class Packer(object):
 
     def _pack_bin_header(self, n):
         if n <= 0xFF:
-            return self._buffer.write(b'\xEE' + _STRUCT_UINT8.pack(n))
+            return self._buffer.write(b'\xCE' + _STRUCT_UINT8.pack(n))
         elif n <= 0xFFFF:
-            return self._buffer.write(b'\xEF' + _STRUCT_UINT16.pack(n))
+            return self._buffer.write(b'\xCF' + _STRUCT_UINT16.pack(n))
         elif n <= 0xFFFFFFFF:
-            return self._buffer.write(b'\xF0' + _STRUCT_UINT32.pack(n))
+            return self._buffer.write(b'\xD0' + _STRUCT_UINT32.pack(n))
         else:
             raise PackValueError('binary too large')
