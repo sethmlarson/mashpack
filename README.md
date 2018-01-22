@@ -61,6 +61,8 @@ the changes. Both projects are licensed under Apache-2.0. See LICENSE.
 
 ## Specification
 
+All multi-byte integers are packed with network byte-order.
+
 ### Data Types Overview
 
 | Data Type | Prefix     | First Byte  |
@@ -189,7 +191,28 @@ where XXXXXXXX_XXXXXXXX_XXXXXXXX_XXXXXXXX is a 32-bit unsigned integer
 
 ### Typed Array Family (`ARRAY8`, `ARRAY16`, `ARRAY32`)
 
+```
+ARRAY8 stores a mapping of up to 255 elements
++--------+--------+--------+~~~~~~~~~~~~~~~~~~~~~~~~~~~~+
+|  0xC8  |XXXXXXXX|YYYYYYYY| N Mashpack-encoded objects |
++--------+--------+--------+~~~~~~~~~~~~~~~~~~~~~~~~~~~~+
+where XXXXXXXX is a 8-bit unsigned integer
+and YYYYYYYY is the header byte of all encoded elements.
 
+ARRAY16 stores a mapping of up to 65,535 elements
++--------+----------------+--------+~~~~~~~~~~~~~~~~~~~~~~~~~~~~+
+|  0xC9  |XXXXXXXXXXXXXXXX|YYYYYYYY| N Mashpack-encoded objects |
++--------+----------------+--------+~~~~~~~~~~~~~~~~~~~~~~~~~~~~+
+where XXXXXXXX_XXXXXXXX is a 16-bit unsigned integer
+and YYYYYYYY is the header byte of all encoded elements.
+
+ARRAY32 stores a mapping of up to 4,294,967,295 elements
++--------+--------------------------------+--------+~~~~~~~~~~~~~~~~~~~~~~~~~~~~+
+|  0xCA  |XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX|YYYYYYYY| N Mashpack-encoded objects |
++--------+--------------------------------+--------+~~~~~~~~~~~~~~~~~~~~~~~~~~~~+
+where XXXXXXXX_XXXXXXXX_XXXXXXXX_XXXXXXXX is a 32-bit unsigned integer
+and YYYYYYYY is the header byte of all encoded elements.
+```
 
 ### Binary Family (`BIN8`, `BIN16`, `BIN32`)
 
@@ -286,12 +309,12 @@ where XXXXXXXX_XXXXXXXX_XXXXXXXX_XXXXXXXX_XXXXXXXX_XXXXXXXX_XXXXXXXX_XXXXXXXX is
 `BOOL` format stores a true or false in one byte.
 
 ```
-false:
+FALSE:
 +--------+
 |  0xC0  |
 +--------+
 
-true:
+TRUE:
 +--------+
 |  0xC1  |
 +--------+
@@ -316,7 +339,28 @@ IEEE 754 double precision floating point number
 
 ### Extension Family (`EXT8`, `EXT16`, `EXT32`)
 
-`TODO`
+```
+EXT8 stores a mapping of up to 255 bytes
++--------+--------+--------+=======+
+|  0xDB  |XXXXXXXX|YYYYYYYY| bytes |
++--------+--------+--------+=======+
+where XXXXXXXX is a 8-bit unsigned integer for length
+of bytes and YYYYYYYY is the 8-bit extension code
+
+EXT16 stores a mapping of up to 65,535 bytes
++--------+----------------+--------+=======+
+|  0xDC  |XXXXXXXXXXXXXXXX|YYYYYYYY| bytes |
++--------+----------------+--------+=======+
+where XXXXXXXX_XXXXXXXX is a 16-bit unsigned integer for length
+of bytes and YYYYYYYY is the 8-bit extension code
+
+EXT32 stores a mapping of up to 4,294,967,295 bytes
++--------+--------------------------------+--------+=======+
+|  0xDD  |XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX|YYYYYYYY| bytes |
++--------+--------------------------------+--------+=======+
+where XXXXXXXX_XXXXXXXX_XXXXXXXX_XXXXXXXX is a 32-bit unsigned integer for length
+of bytes and YYYYYYYY is the 8-bit extension code
+```
 
 ### Null Family (`NULL`)
 
