@@ -73,8 +73,8 @@ _STRUCT_ARRAY8 = struct.Struct('>BB')
 _STRUCT_ARRAY16 = struct.Struct('>HB')
 _STRUCT_ARRAY32 = struct.Struct('>IB')
 _STRUCT_EXT8 = struct.Struct('>BB')
-_STRUCT_EXT16 = struct.Struct('>IB')
-_STRUCT_EXT32 = struct.Struct('>QB')
+_STRUCT_EXT16 = struct.Struct('>HB')
+_STRUCT_EXT32 = struct.Struct('>IB')
 
 _CMD_SKIP = 0
 _CMD_CONSTRUCT = 1

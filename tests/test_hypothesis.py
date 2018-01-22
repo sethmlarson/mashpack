@@ -15,7 +15,7 @@ def mashpack_obj(draw):
     elif obj_type == 2:
         return draw(st.integers(min_value=-0x7FFFFFFF, max_value=0xFFFFFFFF))
     elif obj_type == 3:
-        return draw(st.floats())
+        return draw(st.floats(allow_nan=False))
     elif obj_type == 4:
         return True
     elif obj_type == 5:

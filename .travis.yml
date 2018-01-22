@@ -10,7 +10,7 @@ install:
   - python -m pip install -r dev-requirements.txt
 
 script:
-  - pytest tests/ -v --cov mashpack
+  - pytest tests/ -vv --cov mashpack
 
 after_script:
   - coverage -m
