@@ -172,19 +172,19 @@ where XXXXX is a 5-bit unsigned integer
 
 MARRAY8 stores a mapping of up to 255 elements
 +--------+--------+~~~~~~~~~~~~~~~~~~~~~~~~~~~~+
-|  0xC2  |XXXXXXXX| N Mashpack-encoded objects |
+|  0xCB  |XXXXXXXX| N Mashpack-encoded objects |
 +--------+--------+~~~~~~~~~~~~~~~~~~~~~~~~~~~~+
 where XXXXXXXX is a 8-bit unsigned integer
 
 MARRAY16 stores a mapping of up to 65,535 elements
 +--------+----------------+~~~~~~~~~~~~~~~~~~~~~~~~~~~~+
-|  0xC3  |XXXXXXXXXXXXXXXX| N Mashpack-encoded objects |
+|  0xCC  |XXXXXXXXXXXXXXXX| N Mashpack-encoded objects |
 +--------+----------------+~~~~~~~~~~~~~~~~~~~~~~~~~~~~+
 where XXXXXXXX_XXXXXXXX is a 16-bit unsigned integer
 
 MARRAY32 stores a mapping of up to 4,294,967,295 elements
 +--------+--------------------------------+~~~~~~~~~~~~~~~~~~~~~~~~~~~~+
-|  0xC3  |XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX| N Mashpack-encoded objects |
+|  0xCD  |XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX| N Mashpack-encoded objects |
 +--------+--------------------------------+~~~~~~~~~~~~~~~~~~~~~~~~~~~~+
 where XXXXXXXX_XXXXXXXX_XXXXXXXX_XXXXXXXX is a 32-bit unsigned integer
 ```
