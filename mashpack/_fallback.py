@@ -675,6 +675,17 @@ class Packer(object):
             self._buffer = BytesIO(ret)
         return ret
 
+    def pack_ext_header(self, code, n):
+        if n >= _DEFAULT_MAX_LEN:
+            raise PackValueError()
+        self._pack_ext_header(code, n)
+        ret = self._buffer.getvalue()
+        if self._autoreset:
+            self._buffer = BytesIO()
+        elif _USING_BYTESBUILDER:
+            self._buffer = BytesIO(ret)
+        return ret
+
     def _pack(self, obj, nest_limit=_DEFAULT_NEST_LIMIT):
         default_used = False
         while True:
@@ -799,21 +810,8 @@ class Packer(object):
 
             # Packing EXT*
             elif isinstance(obj, ExtType):
-                data_len = len(obj.data)
-
-                # Packing EXT8
-                if data_len <= 0xFF:
-                    return self._buffer.write(b'\xDB' + _STRUCT_EXT8.pack(data_len, obj.code) + obj.data)
-
-                # Packing EXT16
-                elif data_len <= 0xFFFF:
-                    return self._buffer.write(b'\xDC' + _STRUCT_EXT16.pack(data_len, obj.code) + obj.data)
-
-                # Packing EXT32
-                elif data_len <= 0xFFFFFFFF:
-                    return self._buffer.write(b'\xDD' + _STRUCT_EXT32.pack(data_len, obj.code) + obj.data)
-                else:
-                    raise PackValueError('ext is too large')
+                self._pack_ext_header(obj.code, len(obj.data))
+                return self._buffer.write(obj.data)
 
             elif not default_used and self._default is not None:
                 obj = self._default(obj)
@@ -875,3 +873,13 @@ class Packer(object):
             return self._buffer.write(b'\xD0' + _STRUCT_UINT32.pack(n))
         else:
             raise PackValueError('binary too large')
+
+    def _pack_ext_header(self, code, n):
+        if n <= 0xFF:
+            return self._buffer.write(b'\xDB')
+        elif n <= 0xFFFF:
+            return self._buffer.write(b'\xDC')
+        elif n <= 0xFFFFFFFF:
+            return self._buffer.write(b'\xDD')
+        else:
+            raise PackValueError('ext too large')
