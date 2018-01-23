@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.0.0] (2018-01-22)
 ### Added
 
 - Add support for extensions using `ExtType`.
@@ -25,4 +25,4 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Removed the `ARRAYP` data type in favor of `MARRAYP`.
 - Removed the `MATRIX16` and `MATRIX32` types in favor of extensions.
 
-[Unreleased]: https://github.com/SethMichaelLarson/mashpack/compare/e094d8eef3c29acfd0201141703a22de52af2ba0...HEAD
+[1.0.0]: https://github.com/SethMichaelLarson/mashpack/compare/e094d8eef3c29acfd0201141703a22de52af2ba0...1.0.0
